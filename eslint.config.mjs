@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party assets — do not lint
+    "node_modules/**",
+    "public/cesium/**",
+    "active.txt",
   ]),
 ]);
 
