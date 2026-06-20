@@ -82,12 +82,13 @@ export default function DashboardClient() {
   // ── 3. Telemetry: smart refresh per data type ────────────────────────────────
   useEffect(() => {
     if (!coordinates) return;
+    const { lat, lon } = coordinates;
     let active = true;
     async function doFetch() {
       if (!active) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/telemetry?lat=${coordinates.lat}&lon=${coordinates.lon}`);
+        const res = await fetch(`/api/telemetry?lat=${lat}&lon=${lon}`);
         if (!res.ok) throw new Error('Failed to fetch telemetry data');
         const data: TelemetryData = await res.json();
         setTelemetry(data);

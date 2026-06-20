@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as satellite from 'satellite.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 // Cache ISS TLE for 1 hour
 interface IssCache {
@@ -12,24 +14,27 @@ async function getIssSatrec() {
   const now = Date.now();
   if (issCache && now - issCache.fetchedAt < 3_600_000) return issCache.satrec;
 
-  const res = await fetch(
-    'https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle',
-    { cache: 'no-store' }
-  ).catch(() => null);
-
-  if (!res?.ok) return issCache?.satrec ?? null;
-
-  const text = await res.text();
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if (lines.length < 3) return issCache?.satrec ?? null;
-
   try {
-    const satrec = satellite.twoline2satrec(lines[1], lines[2]);
-    issCache = { satrec, fetchedAt: now };
-    return satrec;
-  } catch {
-    return issCache?.satrec ?? null;
+    const text = await fs.readFile(path.join(process.cwd(), 'active.txt'), 'utf-8');
+    const lines = text.split(/\r?\n/);
+    let line1 = '';
+    let line2 = '';
+    for (let i = 0; i < lines.length - 2; i += 3) {
+      if (lines[i].includes('ISS (ZARYA)') || lines[i+1].includes('25544U')) {
+        line1 = lines[i+1].trim();
+        line2 = lines[i+2].trim();
+        break;
+      }
+    }
+    if (line1 && line2) {
+      const satrec = satellite.twoline2satrec(line1, line2);
+      issCache = { satrec, fetchedAt: now };
+      return satrec;
+    }
+  } catch (e) {
+    console.error('Failed to read active.txt for ISS', e);
   }
+  return issCache?.satrec ?? null;
 }
 
 export async function GET() {

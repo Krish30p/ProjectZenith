@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { Observer, MoonPhase, Body, Equator, Horizon } from 'astronomy-engine';
 import * as satellite from 'satellite.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 // ─── TLE Cache (5 min TTL) ────────────────────────────────────────────────────
 interface TleCache {
@@ -13,26 +15,25 @@ async function getSatRecs() {
   const now = Date.now();
   if (tleCache && now - tleCache.fetchedAt < 5 * 60_000) return tleCache.satRecs;
 
-  const res = await fetch(
-    'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle',
-    { cache: 'no-store' }
-  ).catch(() => null);
+  try {
+    const text = await fs.readFile(path.join(process.cwd(), 'active.txt'), 'utf-8');
+    const lines = text.split(/\r?\n/);
+    const satRecs: ReturnType<typeof satellite.twoline2satrec>[] = [];
 
-  if (!res?.ok) return tleCache?.satRecs ?? [];
+    for (let i = 0; i < lines.length - 2; i += 3) {
+      const line1 = lines[i + 1]?.trim();
+      const line2 = lines[i + 2]?.trim();
+      if (!line1 || !line2 || line1.length < 50 || line2.length < 50) continue;
+      try { satRecs.push(satellite.twoline2satrec(line1, line2)); } catch { /* skip */ }
+    }
 
-  const text = await res.text();
-  const lines = text.split(/\r?\n/);
-  const satRecs: ReturnType<typeof satellite.twoline2satrec>[] = [];
-
-  for (let i = 0; i < lines.length - 2; i += 3) {
-    const line1 = lines[i + 1]?.trim();
-    const line2 = lines[i + 2]?.trim();
-    if (!line1 || !line2 || line1.length < 50 || line2.length < 50) continue;
-    try { satRecs.push(satellite.twoline2satrec(line1, line2)); } catch { /* skip */ }
+    tleCache = { satRecs, fetchedAt: now };
+    return satRecs;
+  } catch (e) {
+    console.error('Failed to read active.txt', e);
   }
 
-  tleCache = { satRecs, fetchedAt: now };
-  return satRecs;
+  return tleCache?.satRecs ?? [];
 }
 
 function countOverheadSatellites(
