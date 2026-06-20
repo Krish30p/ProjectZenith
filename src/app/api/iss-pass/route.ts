@@ -8,13 +8,19 @@ interface IssCache {
   fetchedAt: number;
 }
 let issCache: IssCache | null = null;
+let activeRefresh: Promise<void> | null = null;
 
-async function getIssSatrec() {
+async function refreshIssSatrec() {
+  const url = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle';
   const now = Date.now();
-  if (issCache && now - issCache.fetchedAt < 3_600_000) return issCache.satrec;
-
   try {
-    const text = await fs.readFile(path.join(process.cwd(), 'active.txt'), 'utf-8');
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(10000),
+      next: { revalidate: 21600 }, // 6 hours
+    });
+    if (!res.ok) throw new Error(`CelesTrak stations fetch failed: ${res.status}`);
+    
+    const text = await res.text();
     const lines = text.split(/\r?\n/);
     let line1 = '';
     let line2 = '';
@@ -28,11 +34,48 @@ async function getIssSatrec() {
     if (line1 && line2) {
       const satrec = satellite.twoline2satrec(line1, line2);
       issCache = { satrec, fetchedAt: now };
-      return satrec;
+      console.log('[ISS API] Successfully fetched live CelesTrak ISS TLE.');
     }
-  } catch (e) {
-    console.error('Failed to read active.txt for ISS', e);
+  } catch (error) {
+    console.warn('[ISS API] Live fetch failed for ISS. Falling back to active.txt.', error);
+    if (issCache) return;
+
+    try {
+      const text = await fs.readFile(path.join(process.cwd(), 'active.txt'), 'utf-8');
+      const lines = text.split(/\r?\n/);
+      let line1 = '';
+      let line2 = '';
+      for (let i = 0; i < lines.length - 2; i += 3) {
+        if (lines[i].includes('ISS (ZARYA)') || lines[i+1].includes('25544U')) {
+          line1 = lines[i+1].trim();
+          line2 = lines[i+2].trim();
+          break;
+        }
+      }
+      if (line1 && line2) {
+        const satrec = satellite.twoline2satrec(line1, line2);
+        issCache = { satrec, fetchedAt: now };
+      }
+    } catch (fsErr) {
+      console.error('Failed to read active.txt for ISS', fsErr);
+    }
   }
+}
+
+async function getIssSatrec() {
+  const isStale = !issCache || (Date.now() - issCache.fetchedAt > 6 * 60 * 60 * 1000); // 6h TTL
+  
+  if (issCache && isStale && !activeRefresh) {
+    activeRefresh = refreshIssSatrec().finally(() => { activeRefresh = null; });
+  }
+  
+  if (!issCache) {
+    if (!activeRefresh) {
+      activeRefresh = refreshIssSatrec().finally(() => { activeRefresh = null; });
+    }
+    await activeRefresh;
+  }
+  
   return issCache?.satrec ?? null;
 }
 

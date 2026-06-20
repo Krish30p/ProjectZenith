@@ -50,17 +50,12 @@ export function Navbar() {
             <Link href="#features" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
               Features
             </Link>
-            <Link href="#observatory" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
+            <Link href="/observatory" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
               Observatory
             </Link>
             <Link href="#documentation" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
               Documentation
             </Link>
-            
-            <button className="relative group overflow-hidden rounded-full bg-white/5 border border-white/10 px-8 py-2.5 text-lg font-primary font-medium text-white transition-all hover:bg-white/10 hover:shadow-[0_0_20px_rgba(0,229,255,0.2)]">
-              <span className="relative z-10">Launch Observatory</span>
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[#00E5FF]/20 to-transparent group-hover:animate-shimmer" />
-            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -89,17 +84,13 @@ export function Navbar() {
             <Link href="#features" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
               Features
             </Link>
-            <Link href="#observatory" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
+            <Link href="/observatory" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
               Observatory
             </Link>
             <Link href="#documentation" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
               Documentation
             </Link>
-            <div className="pt-2">
-              <button className="w-full rounded-full bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] px-6 py-4 text-lg font-primary font-bold text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-                Launch Observatory
-              </button>
-            </div>
+
           </div>
         </motion.div>
       )}

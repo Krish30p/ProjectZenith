@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import * as Cesium from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import { env } from "@/lib/config";
-import { SatelliteCategory, TleData } from "@/lib/satellites";
+import { SatelliteCategory, TleData, LayerPayload } from "@/lib/satellites";
 import * as satellite from "satellite.js";
 
 if (typeof window !== "undefined") {
@@ -16,6 +16,8 @@ interface Props {
   satellitesMap: Record<SatelliteCategory, LayerPayload | null>;
   activeLayers: Record<SatelliteCategory, boolean>;
   selectedSatelliteId: string | null;
+  trackedSatelliteId?: string | null;
+  orbitTrailsEnabled?: boolean;
   onLocationSelect: (lat: number, lon: number) => void;
   onSatelliteSelect: (id: string) => void;
   selectedLocation: { lat: number; lon: number } | null;
@@ -33,6 +35,8 @@ export default function GlobeViewer({
   satellitesMap,
   activeLayers,
   selectedSatelliteId,
+  trackedSatelliteId,
+  orbitTrailsEnabled = true,
   onLocationSelect,
   onSatelliteSelect,
   selectedLocation,
@@ -129,7 +133,7 @@ export default function GlobeViewer({
       const limit = category === 'starlink' ? 300 : sats.length;
       const visibleSats = sats.slice(0, limit);
 
-      visibleSats.forEach(sat => {
+      visibleSats.forEach((sat: TleData) => {
         const entityId = `sat_${sat.id}`;
         currentSatIds.add(entityId);
 
@@ -227,11 +231,14 @@ export default function GlobeViewer({
         if (entity.point) {
           if (noradId === selectedSatelliteId) {
             entity.point.pixelSize = new Cesium.ConstantProperty(18);
+            entity.point.color = new Cesium.ConstantProperty(Cesium.Color.fromCssColorString("#34D399"));
             entity.point.outlineColor = new Cesium.ConstantProperty(Cesium.Color.WHITE);
             entity.point.outlineWidth = new Cesium.ConstantProperty(3);
           } else {
             const isStation = meta.category === 'stations';
+            const catColor = Cesium.Color.fromCssColorString(CATEGORY_COLORS[meta.category] || "#FFFFFF");
             entity.point.pixelSize = new Cesium.ConstantProperty(isStation ? 14 : 6);
+            entity.point.color = new Cesium.ConstantProperty(catColor);
             entity.point.outlineColor = new Cesium.ConstantProperty(isStation ? Cesium.Color.WHITE : Cesium.Color.BLACK);
             entity.point.outlineWidth = new Cesium.ConstantProperty(isStation ? 2 : 1);
           }
@@ -246,15 +253,21 @@ export default function GlobeViewer({
     return () => clearInterval(interval);
   }, [selectedSatelliteId]);
 
-  // ── Orbit Trails ────────────────────────────────────────────────────────
+  // ── Orbit Trails (Past / Future Segments) ────────────────────────────────
+  const orbitPastRef = useRef<Cesium.Entity | null>(null);
+  const orbitFutureRef = useRef<Cesium.Entity | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
 
-    if (orbitEntityRef.current) {
-      viewer.entities.remove(orbitEntityRef.current);
-      orbitEntityRef.current = null;
-    }
+    // Clean up previous orbit entities
+    if (orbitPastRef.current) { viewer.entities.remove(orbitPastRef.current); orbitPastRef.current = null; }
+    if (orbitFutureRef.current) { viewer.entities.remove(orbitFutureRef.current); orbitFutureRef.current = null; }
+    if (orbitEntityRef.current) { viewer.entities.remove(orbitEntityRef.current); orbitEntityRef.current = null; }
+
+    if (!orbitTrailsEnabled) return;
 
     let targetId = selectedSatelliteId;
     if (!targetId) {
@@ -270,36 +283,134 @@ export default function GlobeViewer({
     const meta = satrecsRef.current.get(targetId);
     if (!meta) return;
 
-    // Generate past and future orbit segments
-    const positions: Cesium.Cartesian3[] = [];
     const nowMs = Date.now();
-    
-    // -45 mins to +45 mins (roughly one orbit)
-    for (let offsetMs = -45 * 60 * 1000; offsetMs <= 45 * 60 * 1000; offsetMs += 60 * 1000) {
+    const pastPositions: Cesium.Cartesian3[] = [];
+    const futurePositions: Cesium.Cartesian3[] = [];
+
+    // Past: -45 mins to now
+    for (let offsetMs = -45 * 60 * 1000; offsetMs <= 0; offsetMs += 30 * 1000) {
       const t = new Date(nowMs + offsetMs);
       const posVel = satellite.propagate(meta.satrec, t);
       if (typeof posVel.position !== 'boolean') {
         const gmst = satellite.gstime(t);
         const geo = satellite.eciToGeodetic(posVel.position, gmst);
-        positions.push(Cesium.Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height * 1000));
+        pastPositions.push(Cesium.Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height * 1000));
       }
     }
 
-    const colorStr = CATEGORY_COLORS[meta.category] || "#FFFFFF";
+    // Future: now to +45 mins
+    for (let offsetMs = 0; offsetMs <= 45 * 60 * 1000; offsetMs += 30 * 1000) {
+      const t = new Date(nowMs + offsetMs);
+      const posVel = satellite.propagate(meta.satrec, t);
+      if (typeof posVel.position !== 'boolean') {
+        const gmst = satellite.gstime(t);
+        const geo = satellite.eciToGeodetic(posVel.position, gmst);
+        futurePositions.push(Cesium.Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height * 1000));
+      }
+    }
 
-    orbitEntityRef.current = viewer.entities.add({
+    // Past orbit: white, dashed
+    orbitPastRef.current = viewer.entities.add({
+      id: `orbit_past_${targetId}`,
       polyline: {
-        positions,
+        positions: pastPositions,
         width: 2,
         material: new Cesium.PolylineDashMaterialProperty({
-          color: Cesium.Color.fromCssColorString(colorStr).withAlpha(0.6),
+          color: Cesium.Color.WHITE.withAlpha(0.35),
           dashLength: 16,
         }),
         arcType: Cesium.ArcType.NONE,
       },
     });
 
-  }, [selectedSatelliteId]);
+    // Future orbit: category-colored, solid
+    const futureColor = Cesium.Color.fromCssColorString(CATEGORY_COLORS[meta.category] || "#00E5FF");
+    orbitFutureRef.current = viewer.entities.add({
+      id: `orbit_future_${targetId}`,
+      polyline: {
+        positions: futurePositions,
+        width: 2.5,
+        material: futureColor.withAlpha(0.7),
+        arcType: Cesium.ArcType.NONE,
+      },
+    });
+
+  }, [selectedSatelliteId, orbitTrailsEnabled]);
+
+  // ── Orbit Segment Hover Tooltip ─────────────────────────────────────────
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    // Create the tooltip DOM element
+    const tooltip = document.createElement('div');
+    tooltip.style.cssText = `
+      position: absolute; pointer-events: none; z-index: 100;
+      background: rgba(2,6,23,0.92); color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px; padding: 5px 10px;
+      font: bold 11px 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px; white-space: nowrap;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: none; transition: opacity 0.15s;
+    `;
+    viewer.container.appendChild(tooltip);
+    tooltipRef.current = tooltip;
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    const showTooltip = (position: Cesium.Cartesian2) => {
+      const picked = viewer.scene.pick(position);
+      if (Cesium.defined(picked) && picked.id && typeof picked.id.id === "string") {
+        const entityId = picked.id.id as string;
+        let label = '';
+        let dotColor = '';
+
+        if (entityId.startsWith('orbit_past_')) {
+          label = '◀ PAST ORBIT';
+          dotColor = 'rgba(255,255,255,0.6)';
+        } else if (entityId.startsWith('orbit_future_')) {
+          label = 'FUTURE ORBIT ▶';
+          dotColor = '#00E5FF';
+        } else if (entityId.startsWith('sat_')) {
+          const noradId = entityId.replace('sat_', '');
+          const meta = satrecsRef.current.get(noradId);
+          if (noradId === selectedSatelliteId) {
+            label = '● CURRENT POSITION';
+            dotColor = '#10B981';
+          } else if (meta) {
+            label = meta.name;
+            dotColor = CATEGORY_COLORS[meta.category] || '#FFFFFF';
+          }
+        }
+
+        if (label) {
+          tooltip.innerHTML = `<span style="color:${dotColor}; margin-right:4px;">●</span>${label}`;
+          tooltip.style.display = 'block';
+          tooltip.style.left = `${position.x + 16}px`;
+          tooltip.style.top = `${position.y - 12}px`;
+          return;
+        }
+      }
+      tooltip.style.display = 'none';
+    };
+
+    handler.setInputAction((evt: { endPosition: Cesium.Cartesian2 }) => {
+      showTooltip(evt.endPosition);
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+    // Touch support: show on touch start, hide on touch end
+    handler.setInputAction((evt: { position: Cesium.Cartesian2 }) => {
+      showTooltip(evt.position);
+    }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+    return () => {
+      handler.destroy();
+      if (tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+      tooltipRef.current = null;
+    };
+  }, []);
 
   // ── Location Marker ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -371,6 +482,19 @@ export default function GlobeViewer({
       },
     });
   }, [selectedLocation]);
+
+  // ── Tracked Entity Logic ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!viewerRef.current || !dsRef.current) return;
+    if (trackedSatelliteId) {
+      const entity = dsRef.current.entities.getById(`sat_${trackedSatelliteId}`);
+      if (entity) {
+        viewerRef.current.trackedEntity = entity;
+      }
+    } else {
+      viewerRef.current.trackedEntity = undefined;
+    }
+  }, [trackedSatelliteId]);
 
   return <div ref={containerRef} className="w-full h-full" style={{ background: "#020617" }} />;
 }

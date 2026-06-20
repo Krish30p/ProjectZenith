@@ -28,7 +28,9 @@ interface LocationMeta {
   lat: number;
   lon: number;
   name: string;
+  nameNative?: string;
   country: string;
+  countryNative?: string;
 }
 
 export default function ObservatoryClient() {
@@ -53,6 +55,8 @@ export default function ObservatoryClient() {
   const [selectedSatelliteId, setSelectedSatelliteId] = useState<string | null>(null);
   const [liveSelectedSatellite, setLiveSelectedSatellite] = useState<(LiveSatellite & { source?: string; layerFetchedAt?: number }) | null>(null);
   const [consoleMode, setConsoleMode] = useState<ConsoleMode>('default');
+  const [isTrackingSatellite, setIsTrackingSatellite] = useState(false);
+  const [orbitTrailsEnabled, setOrbitTrailsEnabled] = useState(true);
 
   const coordsRef = useRef(selectedLocation);
   useLayoutEffect(() => { coordsRef.current = selectedLocation; }, [selectedLocation]);
@@ -107,7 +111,7 @@ export default function ObservatoryClient() {
       if (telRes.ok) {
         const tel: TelemetryData = await telRes.json();
         setTelemetry(tel);
-        setLocationMeta({ lat, lon, name: tel.location, country: tel.country });
+        setLocationMeta({ lat, lon, name: tel.location, nameNative: tel.locationNative, country: tel.country, countryNative: tel.countryNative });
       }
     } catch (err) {
       console.error("Location select error:", err);
@@ -145,11 +149,13 @@ export default function ObservatoryClient() {
     }
     
     setConsoleMode(isIss ? 'iss' : 'satellite');
+    setIsTrackingSatellite(true);
     // We intentionally keep selectedLocation, telemetry, and locationMeta intact
   }, [satellitesMap]);
 
   // Console Clear / Close handler
   const handleClearSelection = useCallback(() => {
+    setIsTrackingSatellite(false);
     if (consoleMode === 'satellite' || consoleMode === 'iss') {
       setSelectedSatelliteId(null);
       setLiveSelectedSatellite(null);
@@ -165,6 +171,15 @@ export default function ObservatoryClient() {
       setConsoleMode('default');
     }
   }, [consoleMode, selectedLocation]);
+
+  // Handle Intelligence Panel Quick Actions
+  const handlePanelAction = useCallback((action: 'center' | 'toggle-trail') => {
+    if (action === 'center') {
+      setIsTrackingSatellite(true);
+    } else if (action === 'toggle-trail') {
+      setOrbitTrailsEnabled(prev => !prev);
+    }
+  }, []);
 
   // Compute live properties for the selected satellite every 1 second
   useEffect(() => {
@@ -223,16 +238,45 @@ export default function ObservatoryClient() {
       {/* Globe */}
       <div
         className="absolute inset-0 transition-all duration-500 ease-in-out"
-        style={{ right: "min(420px, 100vw)" }}
+        style={{ right: "min(500px, 100vw)" }}
       >
         <GlobeViewer
           satellitesMap={satellitesMap}
           activeLayers={activeLayers}
           selectedSatelliteId={selectedSatelliteId}
+          trackedSatelliteId={isTrackingSatellite ? selectedSatelliteId : null}
+          orbitTrailsEnabled={orbitTrailsEnabled}
           onLocationSelect={handleLocationSelect}
           onSatelliteSelect={handleSatelliteSelect}
           selectedLocation={selectedLocation}
         />
+
+        {/* Orbit Legend */}
+        <AnimatePresence>
+          {orbitTrailsEnabled && (consoleMode === 'satellite' || consoleMode === 'iss' || selectedSatelliteId) && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.3 }}
+              className="absolute bottom-5 left-5 z-30 flex items-center gap-4 bg-black/70 backdrop-blur-lg border border-white/10 rounded-xl px-4 py-2.5 pointer-events-none select-none"
+            >
+              <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase mr-1">Orbit</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-5 h-[2px] bg-white/40 rounded-full" style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 3px, transparent 3px, transparent 6px)' }} />
+                <span className="text-[10px] font-mono text-slate-400">Past</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="text-[10px] font-mono text-slate-400">Now</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-5 h-[2.5px] rounded-full bg-[#00E5FF] shadow-[0_0_6px_rgba(0,229,255,0.4)]" />
+                <span className="text-[10px] font-mono text-slate-400">Future</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Layer Manager */}
@@ -261,7 +305,7 @@ export default function ObservatoryClient() {
 
       {/* Intelligence Panel */}
       <div
-        className="absolute top-0 right-0 h-full w-full max-w-[420px] z-40"
+        className="absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-300"
       >
         <IntelligencePanel
           consoleMode={consoleMode}
@@ -270,8 +314,10 @@ export default function ObservatoryClient() {
           location={locationMeta}
           telemetry={telemetry}
           satellite={liveSelectedSatellite}
+          orbitTrailsEnabled={orbitTrailsEnabled}
           loading={loading}
           onClose={handleClearSelection}
+          onAction={handlePanelAction}
         />
       </div>
     </div>

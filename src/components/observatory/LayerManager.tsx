@@ -28,19 +28,18 @@ export default function LayerManager({ layers, onToggleLayer }: LayerManagerProp
           <button
             key={cat.key}
             onClick={() => onToggleLayer(cat.key)}
-            className={`w-full px-3 py-2.5 flex items-center justify-between rounded-xl transition-all duration-300 ${
-              layers[cat.key] 
-                ? "bg-white/10 hover:bg-white/15" 
+            className={`w-full px-3 py-2.5 flex items-center justify-between rounded-xl transition-all duration-300 ${layers[cat.key]
+                ? "bg-white/10 hover:bg-white/15"
                 : "hover:bg-white/5 opacity-60 hover:opacity-100"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-3">
-              <span 
+              <span
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${layers[cat.key] ? 'shadow-[0_0_8px_currentColor]' : ''}`}
-                style={{ 
-                  color: cat.color, 
-                  backgroundColor: layers[cat.key] ? cat.color : "transparent", 
-                  border: `1px solid ${cat.color}` 
+                style={{
+                  color: cat.color,
+                  backgroundColor: layers[cat.key] ? cat.color : "transparent",
+                  border: `1px solid ${cat.color}`
                 }}
               />
               <span className="text-sm text-white font-medium">{cat.label}</span>

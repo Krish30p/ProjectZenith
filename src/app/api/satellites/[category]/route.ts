@@ -37,7 +37,7 @@ async function refreshLayer(category: string) {
 
   try {
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(2500),
+      signal: AbortSignal.timeout(10000),
       // We still let Next.js cache the fetch, but we manage our own memory cache for the SWR pattern
       next: { revalidate: CATEGORY_MAP[category].revalidate },
     });
