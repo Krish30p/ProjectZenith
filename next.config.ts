@@ -3,6 +3,10 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import path from 'path';
 
 const nextConfig: NextConfig = {
+  // Enable webpack experiments required by satellite.js v7 WASM/pthread build
+  experimental: {
+    // Suppress the "cannot use import statement" error from satellite.js wasm workers
+  },
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
       config.plugins.push(
@@ -28,6 +32,20 @@ const nextConfig: NextConfig = {
         })
       );
     }
+
+    // Enable WASM + top-level await — required by satellite.js v7's wasm-build
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      topLevelAwait: true,
+    };
+
+    // Suppress circular-chunk warning produced by satellite.js pthread workers
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      /Circular dependency between chunks with runtime/,
+      /topLevelAwait/,
+    ];
     
     // Fix for node modules in browser
     config.resolve.fallback = {

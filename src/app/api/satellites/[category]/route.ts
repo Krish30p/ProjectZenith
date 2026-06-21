@@ -6,9 +6,9 @@ import path from 'path';
 const CATEGORY_MAP: Record<string, { group: string; revalidate: number }> = {
   stations: { group: 'stations', revalidate: 21600 },
   starlink: { group: 'starlink', revalidate: 21600 },
-  gps:      { group: 'gps-ops',  revalidate: 43200 },
-  weather:  { group: 'weather',  revalidate: 43200 },
-  iridium:  { group: 'iridium',  revalidate: 43200 },
+  gps: { group: 'gps-ops', revalidate: 43200 },
+  weather: { group: 'weather', revalidate: 43200 },
+  iridium: { group: 'iridium', revalidate: 43200 },
 };
 
 function parseEpoch(line1: string): number {
@@ -54,7 +54,7 @@ async function refreshLayer(category: string) {
       const tle1 = lines[i + 1];
       const tle2 = lines[i + 2];
       const noradId = tle1.substring(2, 7).trim();
-      
+
       parsedData.push({
         id: noradId,
         name,
@@ -72,11 +72,11 @@ async function refreshLayer(category: string) {
       fetchedAt: now,
       satellites: parsedData,
     });
-    
+
     console.log(`[Satellite API] Refreshed ${category} from live CelesTrak.`);
   } catch (error) {
     console.warn(`[Satellite API] Live fetch failed for ${category}. Reason:`, error);
-    
+
     // If we already have something in memory (even a fallback), we preserve it rather than overwriting
     if (memoryCache.has(category)) {
       console.log(`[Satellite API] Keeping existing cache for ${category} after live fetch failure.`);
@@ -90,12 +90,12 @@ async function refreshLayer(category: string) {
         const text = fs.readFileSync(activePath, 'utf8');
         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
         const parsedData: TleData[] = [];
-        
+
         for (let i = 0; i < lines.length; i += 3) {
           if (i + 2 >= lines.length) break;
           const name = lines[i].replace(/^0 /, '');
           const upperName = name.toUpperCase();
-          
+
           let match = false;
           if (category === 'stations' && (upperName.includes('ISS') || upperName.includes('CSS'))) match = true;
           else if (category === 'starlink' && upperName.includes('STARLINK')) match = true;
@@ -118,7 +118,7 @@ async function refreshLayer(category: string) {
             });
           }
         }
-        
+
         memoryCache.set(category, {
           category: category as SatelliteCategory,
           source: 'local-fallback',
@@ -139,7 +139,7 @@ export async function GET(
   { params }: { params: Promise<{ category: string }> }
 ) {
   const { category } = await params;
-  
+
   if (!CATEGORY_MAP[category]) {
     return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
   }
@@ -147,7 +147,7 @@ export async function GET(
   // 1. If we have it in memory cache, serve it immediately (SWR pattern)
   if (memoryCache.has(category)) {
     const cached = memoryCache.get(category)!;
-    
+
     // Kick off a background refresh if it's stale (older than 1 minute) and not already refreshing
     const isStale = Date.now() - cached.fetchedAt > 60000;
     if (isStale && !activeRefreshes.has(category)) {
@@ -160,7 +160,7 @@ export async function GET(
       ...cached,
       source: cached.source === 'live-celestrak' ? 'cached-celestrak' : cached.source,
     };
-    
+
     return NextResponse.json(payloadToReturn);
   }
 
@@ -169,7 +169,7 @@ export async function GET(
     const refreshPromise = refreshLayer(category).finally(() => activeRefreshes.delete(category));
     activeRefreshes.set(category, refreshPromise);
   }
-  
+
   await activeRefreshes.get(category);
 
   const finalPayload = memoryCache.get(category);

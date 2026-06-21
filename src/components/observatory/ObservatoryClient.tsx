@@ -11,6 +11,7 @@ import { TelemetryData } from "./IntelligencePanel";
 import LayerManager from "./LayerManager";
 import { SatelliteCategory, TleData, LiveSatellite, LayerPayload } from "@/lib/satellites";
 import * as satellite from "satellite.js";
+import { CosmicBookOverlay } from "./CosmicBookOverlay";
 
 const GlobeViewer = dynamic(() => import("./GlobeViewer"), {
   ssr: false,
@@ -55,8 +56,28 @@ export default function ObservatoryClient() {
   const [selectedSatelliteId, setSelectedSatelliteId] = useState<string | null>(null);
   const [liveSelectedSatellite, setLiveSelectedSatellite] = useState<(LiveSatellite & { source?: string; layerFetchedAt?: number }) | null>(null);
   const [consoleMode, setConsoleMode] = useState<ConsoleMode>('default');
+  const [isBookOpen, setIsBookOpen] = useState(false);
   const [isTrackingSatellite, setIsTrackingSatellite] = useState(false);
   const [orbitTrailsEnabled, setOrbitTrailsEnabled] = useState(true);
+
+  // Fetch ISS pass for location mode
+  const [issPass, setIssPass] = useState<{ nextPass: number | null, maxElevationDegrees: number | null } | null>(null);
+  const [issPassLoading, setIssPassLoading] = useState(false);
+
+  useEffect(() => {
+    if (consoleMode === 'location' && selectedLocation) {
+      setIssPassLoading(true);
+      fetch(`/api/iss-pass?lat=${selectedLocation.lat}&lon=${selectedLocation.lon}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.error) setIssPass(data);
+        })
+        .catch(console.error)
+        .finally(() => setIssPassLoading(false));
+    } else {
+      setIssPass(null);
+    }
+  }, [consoleMode, selectedLocation]);
 
   const coordsRef = useRef(selectedLocation);
   useLayoutEffect(() => { coordsRef.current = selectedLocation; }, [selectedLocation]);
@@ -104,6 +125,7 @@ export default function ObservatoryClient() {
     setSelectedLocation({ lat, lon });
     // "clicking Earth / searching a place sets selectedLocation and switches to location"
     setConsoleMode('location');
+    setIsBookOpen(true);
     setLoading(true);
 
     try {
@@ -279,6 +301,16 @@ export default function ObservatoryClient() {
         </AnimatePresence>
       </div>
 
+      {/* Cosmic Book Overlay for Location Mode */}
+      <CosmicBookOverlay
+        isOpen={isBookOpen && consoleMode === 'location'}
+        onClose={() => setIsBookOpen(false)}
+        location={locationMeta}
+        telemetry={telemetry}
+        issPass={issPass}
+        issPassLoading={issPassLoading}
+      />
+
       {/* Layer Manager */}
       <LayerManager layers={activeLayers} onToggleLayer={handleToggleLayer} />
 
@@ -295,7 +327,15 @@ export default function ObservatoryClient() {
         <div className="pointer-events-auto">
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-2">
+          {consoleMode === 'location' && !isBookOpen && (
+            <button
+              onClick={() => setIsBookOpen(true)}
+              className="bg-[#00E5FF]/10 hover:bg-[#00E5FF]/20 border border-[#00E5FF]/30 text-[#00E5FF] px-4 py-1.5 rounded-full backdrop-blur-md transition-colors font-mono text-[10px] tracking-wider uppercase mr-2"
+            >
+              Open Atlas
+            </button>
+          )}
           <div className="flex items-center gap-2 bg-black/40 border border-white/10 backdrop-blur-md rounded-full px-3 py-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
             <span className="font-mono text-[10px] text-slate-400 tracking-wider uppercase">Live</span>
@@ -303,9 +343,9 @@ export default function ObservatoryClient() {
         </div>
       </div>
 
-      {/* Intelligence Panel */}
+      {/* Intelligence Panel (Hidden when Location Book is open) */}
       <div
-        className="absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-300"
+        className={`absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-300 ${consoleMode === 'location' ? 'translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}
       >
         <IntelligencePanel
           consoleMode={consoleMode}

@@ -21,7 +21,7 @@ async function refreshActiveSatRecs() {
       next: { revalidate: 43200 }, // 12 hours
     });
     if (!res.ok) throw new Error(`CelesTrak active fetch failed: ${res.status}`);
-    
+
     const text = await res.text();
     const lines = text.split(/\r?\n/);
     const satRecs: ReturnType<typeof satellite.twoline2satrec>[] = [];
@@ -58,12 +58,12 @@ async function refreshActiveSatRecs() {
 
 async function getSatRecs() {
   const isStale = !tleCache || (Date.now() - tleCache.fetchedAt > 12 * 60 * 60 * 1000); // 12h TTL
-  
+
   // If we have cache and it's stale, start background refresh but serve cached immediately
   if (tleCache && isStale && !activeRefresh) {
     activeRefresh = refreshActiveSatRecs().finally(() => { activeRefresh = null; });
   }
-  
+
   // If we have no cache, we MUST await the refresh
   if (!tleCache) {
     if (!activeRefresh) {
@@ -71,7 +71,7 @@ async function getSatRecs() {
     }
     await activeRefresh;
   }
-  
+
   return tleCache?.satRecs ?? [];
 }
 

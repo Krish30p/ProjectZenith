@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play } from "lucide-react";
 import Link from "next/link";
+import { Play } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -66,9 +66,10 @@ export function HeroSection() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.8 }}
           className="flex flex-col sm:flex-row items-center gap-6"
         >
-          <Link 
+          {/* Launch Observatory — navigates to full screen app */}
+          <Link
             href="/observatory"
-            className="group relative w-full sm:w-auto overflow-hidden rounded-full p-[1px]"
+            className="group relative w-full sm:w-auto overflow-hidden rounded-full p-[1px] cursor-pointer"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] rounded-full opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative bg-[#020617] px-8 py-4 rounded-full transition-all duration-300 group-hover:bg-opacity-0">

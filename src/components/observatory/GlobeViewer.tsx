@@ -123,6 +123,7 @@ export default function GlobeViewer({
     if (!ds) return;
 
     const currentSatIds = new Set<string>();
+    const seenNames = new Set<string>(); // Keep track of rendered labels to avoid text overlay
 
     (Object.keys(satellitesMap) as SatelliteCategory[]).forEach(category => {
       if (!activeLayers[category] || !satellitesMap[category]) return;
@@ -146,12 +147,18 @@ export default function GlobeViewer({
         }
 
         let entity = ds.entities.getById(entityId);
+        
+        const isStation = category === 'stations';
+        const isFirstOfName = !seenNames.has(sat.name);
+        if (isStation) {
+          seenNames.add(sat.name);
+        }
+
         if (!entity) {
           // Create new SampledPositionProperty
           const posProp = new Cesium.SampledPositionProperty();
           posProp.forwardExtrapolationType = Cesium.ExtrapolationType.HOLD;
 
-          const isStation = category === 'stations';
           const color = Cesium.Color.fromCssColorString(CATEGORY_COLORS[category] || "#FFFFFF");
 
           entity = ds.entities.add({
@@ -164,7 +171,7 @@ export default function GlobeViewer({
               outlineWidth: isStation ? 2 : 1,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },
-            label: isStation ? {
+            label: (isStation && isFirstOfName) ? {
               text: sat.name,
               font: "bold 11px monospace",
               fillColor: color,

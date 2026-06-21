@@ -4,7 +4,7 @@ import { TheSkyWeLost } from "@/components/TheSkyWeLost";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#020617]">
+    <main className="relative min-h-screen bg-[#020617]">
       <Navbar />
       <HeroSection />
       <TheSkyWeLost />
