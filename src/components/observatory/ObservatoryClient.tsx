@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
+import { Satellite, Radio, Crosshair } from "lucide-react";
 import Link from "next/link";
 import LocationSearch from "./LocationSearch";
 import IntelligencePanel from "./IntelligencePanel";
@@ -60,6 +61,10 @@ export default function ObservatoryClient() {
   const [isTrackingSatellite, setIsTrackingSatellite] = useState(false);
   const [orbitTrailsEnabled, setOrbitTrailsEnabled] = useState(true);
 
+  // Orbital Lens State
+  const [isLensActive, setIsLensActive] = useState(false);
+  const [lensLoading, setLensLoading] = useState(false);
+
   // Fetch ISS pass for location mode
   const [issPass, setIssPass] = useState<{ nextPass: number | null, maxElevationDegrees: number | null } | null>(null);
   const [issPassLoading, setIssPassLoading] = useState(false);
@@ -82,12 +87,12 @@ export default function ObservatoryClient() {
   const coordsRef = useRef(selectedLocation);
   useLayoutEffect(() => { coordsRef.current = selectedLocation; }, [selectedLocation]);
 
-  // Fetch TLEs when a layer is enabled or periodically
+  // Fetch TLEs when a layer is enabled, lens is active, or periodically
   useEffect(() => {
     let active = true;
 
     async function fetchLayer(category: SatelliteCategory) {
-      if (!activeLayers[category]) return;
+      // Don't check activeLayers[category] here, because lens might require it
       try {
         const res = await fetch(`/api/satellites/${category}`);
         if (!res.ok || !active) return;
@@ -98,22 +103,32 @@ export default function ObservatoryClient() {
       }
     }
 
-    // Fetch newly enabled layers
+    const requiredForLens: SatelliteCategory[] = ['stations', 'gps', 'weather', 'iridium', 'starlink'];
+    const catsToFetch = new Set<SatelliteCategory>();
+    
     (Object.keys(activeLayers) as SatelliteCategory[]).forEach(cat => {
-      if (activeLayers[cat] && !satellitesMap[cat]) {
+      if (activeLayers[cat]) catsToFetch.add(cat);
+    });
+    
+    if (isLensActive || lensLoading) {
+      requiredForLens.forEach(cat => catsToFetch.add(cat));
+    }
+
+    catsToFetch.forEach(cat => {
+      if (!satellitesMap[cat]) {
         fetchLayer(cat);
       }
     });
 
     // Refresh every hour for long-lived sessions
     const interval = setInterval(() => {
-      (Object.keys(activeLayers) as SatelliteCategory[]).forEach(cat => {
-        if (activeLayers[cat]) fetchLayer(cat);
+      catsToFetch.forEach(cat => {
+        fetchLayer(cat);
       });
     }, 60 * 60_000);
 
     return () => { active = false; clearInterval(interval); };
-  }, [activeLayers]); // Intentionally omitting satellitesMap from dependency to avoid loop
+  }, [activeLayers, isLensActive, lensLoading]); // Intentionally omitting satellitesMap from dependency to avoid loop
 
   // Toggle Layer
   const handleToggleLayer = (category: SatelliteCategory) => {
@@ -271,6 +286,8 @@ export default function ObservatoryClient() {
           onLocationSelect={handleLocationSelect}
           onSatelliteSelect={handleSatelliteSelect}
           selectedLocation={selectedLocation}
+          isLensActive={isLensActive}
+          onLensLoaded={() => setLensLoading(false)}
         />
 
         {/* Orbit Legend */}
@@ -311,6 +328,116 @@ export default function ObservatoryClient() {
         issPassLoading={issPassLoading}
       />
 
+      {/* Cinematic Lens Loading Overlay */}
+      <AnimatePresence>
+        {lensLoading && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none overflow-hidden"
+          >
+            {/* Background Data Streams (Simulated TLE Hex) */}
+            <div className="absolute inset-0 opacity-10 flex flex-wrap gap-4 p-8 overflow-hidden font-mono text-[8px] text-[#00E5FF] leading-none break-all select-none">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0.1 }}
+                  animate={{ opacity: [0.1, 0.8, 0.1] }}
+                  transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }}
+                >
+                  {Math.random().toString(36).substring(2, 15).toUpperCase()} 1 {Math.floor(Math.random()*90000)}U {Math.floor(Math.random()*99)}0{Math.floor(Math.random()*99)}A   {Math.floor(Math.random()*99)}{Math.floor(Math.random()*999)}.{Math.floor(Math.random()*99999999)}  .00000{Math.floor(Math.random()*999)}  00000-0  {Math.floor(Math.random()*9999)}-4 0  999
+                </motion.span>
+              ))}
+            </div>
+
+            <div className="absolute inset-0 bg-black/50 mix-blend-multiply" />
+            
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.05, opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+              className="relative z-10 flex flex-col items-center"
+            >
+              {/* Massive Orbital Radar Visual */}
+              <div className="w-[400px] h-[400px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                {/* Outer Orbit Path */}
+                <div className="absolute inset-0 rounded-full border border-dashed border-[#00E5FF]/20 animate-[spin_60s_linear_infinite]" />
+                {/* Inner Orbit Path */}
+                <div className="absolute inset-16 rounded-full border border-[#00E5FF]/10 animate-[spin_40s_linear_infinite_reverse]" />
+                
+                {/* Orbiting Satellites */}
+                <motion.div 
+                  className="absolute inset-0 origin-center"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[#00E5FF] drop-shadow-[0_0_8px_#00E5FF]">
+                    <Satellite className="w-6 h-6 rotate-45" strokeWidth={1.5} />
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="absolute inset-16 origin-center"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="absolute top-1/2 -left-2.5 -translate-y-1/2 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]">
+                    <Radio className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Central Interface Hub */}
+              <div className="relative z-10 bg-black/40 border border-[#00E5FF]/30 backdrop-blur-xl p-8 rounded-2xl shadow-[0_0_50px_rgba(0,229,255,0.1)] flex flex-col items-center">
+                <Crosshair className="w-12 h-12 text-[#00E5FF] opacity-80 mb-6 animate-pulse" strokeWidth={1} />
+                
+                <h2 className="text-2xl md:text-4xl font-light tracking-[0.3em] text-white uppercase mb-4 whitespace-nowrap" style={{ textShadow: "0 0 30px rgba(0, 229, 255, 0.6)" }}>
+                  <span className="text-[#00E5FF] opacity-60 mr-4">[</span>
+                  Orbital Lens
+                  <span className="text-[#00E5FF] opacity-60 ml-4">]</span>
+                </h2>
+                
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#00E5FF]/50" />
+                  <p className="font-mono text-sm text-[#00E5FF] tracking-[0.4em] uppercase opacity-90 drop-shadow-[0_0_8px_#00E5FF]">
+                    Computing Congestion Field
+                  </p>
+                  <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#00E5FF]/50" />
+                </div>
+                
+                <div className="mt-8 flex gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-12 h-1 bg-[#00E5FF]/20 overflow-hidden relative"
+                    >
+                      <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "100%" }}
+                        transition={{ 
+                          duration: 1, 
+                          repeat: Infinity, 
+                          ease: "easeInOut",
+                          delay: i * 0.15 
+                        }}
+                        className="absolute inset-y-0 w-full bg-[#00E5FF] shadow-[0_0_10px_#00E5FF]"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+                
+                <p className="mt-6 font-mono text-[10px] text-slate-400 tracking-widest uppercase">
+                  Projecting TLE Subpoints • Calculating Density
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Layer Manager */}
       <LayerManager layers={activeLayers} onToggleLayer={handleToggleLayer} />
 
@@ -324,7 +451,21 @@ export default function ObservatoryClient() {
             </span>
           </Link>
         </div>
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (!isLensActive) {
+                setLensLoading(true);
+                setIsLensActive(true);
+              } else {
+                setIsLensActive(false);
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur-md transition-all duration-300 font-mono text-[10px] tracking-wider uppercase group ${isLensActive ? 'bg-[#00E5FF]/10 border-[#00E5FF]/40 text-[#00E5FF] shadow-[0_0_20px_rgba(0,229,255,0.2)]' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white'}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${isLensActive ? 'bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] animate-pulse' : 'bg-slate-500 group-hover:bg-slate-400'}`} />
+            Orbital Lens
+          </button>
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
         <div className="pointer-events-auto flex items-center gap-2">

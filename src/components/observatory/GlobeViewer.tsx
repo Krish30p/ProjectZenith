@@ -21,6 +21,8 @@ interface Props {
   onLocationSelect: (lat: number, lon: number) => void;
   onSatelliteSelect: (id: string) => void;
   selectedLocation: { lat: number; lon: number } | null;
+  isLensActive?: boolean;
+  onLensLoaded?: () => void;
 }
 
 const CATEGORY_COLORS: Record<SatelliteCategory, string> = {
@@ -40,6 +42,8 @@ export default function GlobeViewer({
   onLocationSelect,
   onSatelliteSelect,
   selectedLocation,
+  isLensActive = false,
+  onLensLoaded,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef    = useRef<Cesium.Viewer | null>(null);
@@ -184,6 +188,9 @@ export default function GlobeViewer({
             } : undefined,
           });
         }
+        
+        // Hide normal markers when Orbital Lens is active, except stations
+        entity.show = isLensActive ? isStation : true;
       });
     });
 
@@ -200,7 +207,7 @@ export default function GlobeViewer({
       satrecsRef.current.delete(noradId);
     });
 
-  }, [satellitesMap, activeLayers]);
+  }, [satellitesMap, activeLayers, isLensActive]);
 
   // ── High-Performance Propagation Loop ─────────────────────────────────────
   useEffect(() => {
@@ -223,6 +230,9 @@ export default function GlobeViewer({
 
         const isFastGroup = meta.category === 'stations' || noradId === selectedSatelliteId;
         
+        // Skip propagation if entity is hidden and not selected
+        if (!entity.show && noradId !== selectedSatelliteId) return;
+
         // Propagate fast group every 1s, others every 2s
         if (isFastGroup || isSlowTick) {
           const posVel = satellite.propagate(meta.satrec, now);
@@ -259,6 +269,170 @@ export default function GlobeViewer({
     const interval = setInterval(propagate, 1000);
     return () => clearInterval(interval);
   }, [selectedSatelliteId]);
+
+  // ── Orbital Lens Heatmap Logic ───────────────────────────────────────────
+  const heatmapLayerRef = useRef<Cesium.ImageryLayer | null>(null);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    if (!isLensActive) {
+      if (heatmapLayerRef.current) {
+        viewer.imageryLayers.remove(heatmapLayerRef.current);
+        heatmapLayerRef.current = null;
+      }
+      return;
+    }
+
+    const generateHeatmapCanvas = (): HTMLCanvasElement | null => {
+      const width = 1024;
+      const height = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      const requiredForLens: SatelliteCategory[] = ['stations', 'gps', 'weather', 'iridium', 'starlink'];
+      const now = new Date();
+      const gmst = satellite.gstime(now);
+
+      const maxRadius = 16;
+      ctx.globalCompositeOperation = 'lighter';
+
+      const spotCanvas = document.createElement('canvas');
+      spotCanvas.width = maxRadius * 2;
+      spotCanvas.height = maxRadius * 2;
+      const spotCtx = spotCanvas.getContext('2d');
+      if (spotCtx) {
+        const grad = spotCtx.createRadialGradient(maxRadius, maxRadius, 0, maxRadius, maxRadius, maxRadius);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        spotCtx.fillStyle = grad;
+        spotCtx.beginPath();
+        spotCtx.arc(maxRadius, maxRadius, maxRadius, 0, Math.PI * 2);
+        spotCtx.fill();
+      }
+
+      requiredForLens.forEach(category => {
+        const payload = satellitesMap[category];
+        if (!payload) return;
+        
+        const sats = payload.satellites;
+        // Cap very dense networks slightly to ensure smooth generation
+        const limit = category === 'starlink' ? 1800 : sats.length;
+        
+        for (let i = 0; i < Math.min(sats.length, limit); i++) {
+          const sat = sats[i];
+          let meta = satrecsRef.current.get(sat.id);
+          
+          if (!meta) {
+            // Compute satrec on the fly if not in active tracking
+            meta = {
+              satrec: satellite.twoline2satrec(sat.tleLine1, sat.tleLine2),
+              category: sat.category,
+              name: sat.name
+            };
+          }
+
+          const posVel = satellite.propagate(meta.satrec, now);
+          if (typeof posVel.position !== 'boolean') {
+            const geo = satellite.eciToGeodetic(posVel.position, gmst);
+            const lat = satellite.radiansToDegrees(geo.latitude);
+            const lon = satellite.radiansToDegrees(geo.longitude);
+
+            const x = ((lon + 180) / 360) * width;
+            const y = ((90 - lat) / 180) * height;
+
+            ctx.drawImage(spotCanvas, x - maxRadius, y - maxRadius);
+            
+            // Handle horizontal wrapping for spots near longitude +/- 180
+            if (x < maxRadius) ctx.drawImage(spotCanvas, x + width - maxRadius, y - maxRadius);
+            if (x > width - maxRadius) ctx.drawImage(spotCanvas, x - width - maxRadius, y - maxRadius);
+          }
+        }
+      });
+
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      // Congestion Color Ramp
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3];
+        if (alpha === 0) continue;
+
+        const v = alpha / 255;
+        
+        if (v < 0.25) {
+          // Deep Indigo/Purple -> Dark Blue
+          data[i] = 100 * v * 4;       // R
+          data[i+1] = 0;               // G
+          data[i+2] = 200 + (55 * v * 4); // B
+          data[i+3] = alpha * 0.9;
+        } else if (v < 0.6) {
+          // Blue -> Cyan
+          const t = (v - 0.25) / 0.35;
+          data[i] = 100 * (1 - t);
+          data[i+1] = 229 * t;         // G ramps to E5
+          data[i+2] = 255;             // B is max
+          data[i+3] = alpha;
+        } else if (v < 0.85) {
+          // Cyan -> Yellow
+          const t = (v - 0.6) / 0.25;
+          data[i] = 255 * t;           // R ramps to 255
+          data[i+1] = 229 + (26 * t);  // G ramps to 255
+          data[i+2] = 255 * (1 - t);   // B ramps down
+          data[i+3] = alpha;
+        } else {
+          // Bright White/Red Hot Core
+          data[i] = 255;
+          data[i+1] = 255 * (1 - (v - 0.85)/0.15);
+          data[i+2] = 0;
+          data[i+3] = alpha;
+        }
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      return canvas;
+    };
+
+    const refreshHeatmap = async () => {
+      const startTime = Date.now();
+      // Yield to main thread for the loading UI to render before heavy computation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = generateHeatmapCanvas();
+      if (!canvas) return;
+
+      const provider = await Cesium.SingleTileImageryProvider.fromUrl(canvas.toDataURL(), {
+        rectangle: Cesium.Rectangle.MAX_VALUE,
+      });
+
+      const newLayer = viewer.imageryLayers.addImageryProvider(provider);
+      newLayer.alpha = 0.8; // Blend with the globe underneath
+
+      if (heatmapLayerRef.current) {
+        viewer.imageryLayers.remove(heatmapLayerRef.current);
+      }
+      heatmapLayerRef.current = newLayer;
+
+      // Ensure the cinematic overlay stays visible for at least 3 seconds
+      const elapsed = Date.now() - startTime;
+      const minDuration = 3000;
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+      }
+
+      if (onLensLoaded) onLensLoaded();
+    };
+
+    refreshHeatmap();
+
+    // Live refresh cadence: 45 seconds
+    const interval = setInterval(refreshHeatmap, 45_000);
+    return () => clearInterval(interval);
+  }, [isLensActive, satellitesMap, onLensLoaded]);
 
   // ── Orbit Trails (Past / Future Segments) ────────────────────────────────
   const orbitPastRef = useRef<Cesium.Entity | null>(null);
