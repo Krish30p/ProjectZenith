@@ -397,10 +397,13 @@ export default function GlobeViewer({
       return canvas;
     };
 
+    let active = true;
     const refreshHeatmap = async () => {
       const startTime = Date.now();
       // Yield to main thread for the loading UI to render before heavy computation
       await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!viewer || viewer.isDestroyed() || !active) return;
       
       const canvas = generateHeatmapCanvas();
       if (!canvas) return;
@@ -408,6 +411,8 @@ export default function GlobeViewer({
       const provider = await Cesium.SingleTileImageryProvider.fromUrl(canvas.toDataURL(), {
         rectangle: Cesium.Rectangle.MAX_VALUE,
       });
+
+      if (!viewer || viewer.isDestroyed() || !active) return;
 
       const newLayer = viewer.imageryLayers.addImageryProvider(provider);
       newLayer.alpha = 0.8; // Blend with the globe underneath
@@ -431,7 +436,10 @@ export default function GlobeViewer({
 
     // Live refresh cadence: 45 seconds
     const interval = setInterval(refreshHeatmap, 45_000);
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [isLensActive, satellitesMap, onLensLoaded]);
 
   // ── Orbit Trails (Past / Future Segments) ────────────────────────────────
@@ -668,7 +676,8 @@ export default function GlobeViewer({
   useEffect(() => {
     if (!viewerRef.current || !dsRef.current) return;
     if (trackedSatelliteId) {
-      const entity = dsRef.current.entities.getById(`sat_${trackedSatelliteId}`);
+      const actualId = trackedSatelliteId.split('_')[0];
+      const entity = dsRef.current.entities.getById(`sat_${actualId}`);
       if (entity) {
         viewerRef.current.trackedEntity = entity;
       }

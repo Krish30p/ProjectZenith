@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { Satellite, Radio, Crosshair } from "lucide-react";
+import { Satellite, Radio, Crosshair, Aperture } from "lucide-react";
 import Link from "next/link";
 import LocationSearch from "./LocationSearch";
 import IntelligencePanel from "./IntelligencePanel";
@@ -59,6 +59,7 @@ export default function ObservatoryClient() {
   const [consoleMode, setConsoleMode] = useState<ConsoleMode>('default');
   const [isBookOpen, setIsBookOpen] = useState(false);
   const [isTrackingSatellite, setIsTrackingSatellite] = useState(false);
+  const [trackingTrigger, setTrackingTrigger] = useState(0);
   const [orbitTrailsEnabled, setOrbitTrailsEnabled] = useState(true);
 
   // Orbital Lens State
@@ -140,8 +141,10 @@ export default function ObservatoryClient() {
     setSelectedLocation({ lat, lon });
     // "clicking Earth / searching a place sets selectedLocation and switches to location"
     setConsoleMode('location');
-    setIsBookOpen(true);
     setLoading(true);
+    setTelemetry(null);
+    setLocationMeta(null);
+    setIsBookOpen(false); // Hide the book while loading new data
 
     try {
       const telRes = await fetch(`/api/telemetry?lat=${lat}&lon=${lon}`);
@@ -149,6 +152,7 @@ export default function ObservatoryClient() {
         const tel: TelemetryData = await telRes.json();
         setTelemetry(tel);
         setLocationMeta({ lat, lon, name: tel.location, nameNative: tel.locationNative, country: tel.country, countryNative: tel.countryNative });
+        setIsBookOpen(true); // Open book only after data is ready
       }
     } catch (err) {
       console.error("Location select error:", err);
@@ -187,6 +191,7 @@ export default function ObservatoryClient() {
     
     setConsoleMode(isIss ? 'iss' : 'satellite');
     setIsTrackingSatellite(true);
+    setTrackingTrigger(prev => prev + 1);
     // We intentionally keep selectedLocation, telemetry, and locationMeta intact
   }, [satellitesMap]);
 
@@ -213,9 +218,14 @@ export default function ObservatoryClient() {
   const handlePanelAction = useCallback((action: 'center' | 'toggle-trail') => {
     if (action === 'center') {
       setIsTrackingSatellite(true);
+      setTrackingTrigger(prev => prev + 1);
     } else if (action === 'toggle-trail') {
       setOrbitTrailsEnabled(prev => !prev);
     }
+  }, []);
+
+  const handleLensLoaded = useCallback(() => {
+    setLensLoading(false);
   }, []);
 
   // Compute live properties for the selected satellite every 1 second
@@ -270,24 +280,27 @@ export default function ObservatoryClient() {
     return () => clearInterval(interval);
   }, [selectedSatelliteId, consoleMode, satellitesMap]);
 
+  const hasMeaningfulContent = isLensActive || consoleMode !== 'default';
+  const showIntelligencePanel = hasMeaningfulContent && !(consoleMode === 'location' && isBookOpen);
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#020617] font-primary">
       {/* Globe */}
       <div
         className="absolute inset-0 transition-all duration-500 ease-in-out"
-        style={{ right: "min(500px, 100vw)" }}
+        style={{ right: showIntelligencePanel ? "min(500px, 100vw)" : "0px" }}
       >
         <GlobeViewer
           satellitesMap={satellitesMap}
           activeLayers={activeLayers}
           selectedSatelliteId={selectedSatelliteId}
-          trackedSatelliteId={isTrackingSatellite ? selectedSatelliteId : null}
+          trackedSatelliteId={isTrackingSatellite ? `${selectedSatelliteId}_${trackingTrigger}` : null}
           orbitTrailsEnabled={orbitTrailsEnabled}
           onLocationSelect={handleLocationSelect}
           onSatelliteSelect={handleSatelliteSelect}
           selectedLocation={selectedLocation}
           isLensActive={isLensActive}
-          onLensLoaded={() => setLensLoading(false)}
+          onLensLoaded={handleLensLoaded}
         />
 
         {/* Orbit Legend */}
@@ -461,10 +474,27 @@ export default function ObservatoryClient() {
                 setIsLensActive(false);
               }
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur-md transition-all duration-300 font-mono text-[10px] tracking-wider uppercase group ${isLensActive ? 'bg-[#00E5FF]/10 border-[#00E5FF]/40 text-[#00E5FF] shadow-[0_0_20px_rgba(0,229,255,0.2)]' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white'}`}
+            className={`relative flex items-center gap-3 px-6 py-2.5 rounded-full border backdrop-blur-md transition-all duration-500 font-mono text-xs md:text-sm tracking-widest uppercase group overflow-hidden ${
+              isLensActive 
+                ? 'bg-[#00E5FF]/20 border-[#00E5FF]/60 text-white shadow-[0_0_30px_rgba(0,229,255,0.4)]' 
+                : 'bg-black/40 hover:bg-[#00E5FF]/10 border-white/20 hover:border-[#00E5FF]/40 text-slate-300 hover:text-white shadow-lg'
+            }`}
           >
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${isLensActive ? 'bg-[#00E5FF] shadow-[0_0_8px_#00E5FF] animate-pulse' : 'bg-slate-500 group-hover:bg-slate-400'}`} />
-            Orbital Lens
+            {/* Animated Background Glow */}
+            {isLensActive && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00E5FF]/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+            )}
+            
+            <div className={`relative flex items-center justify-center w-6 h-6 rounded-full transition-all duration-500 ${isLensActive ? 'bg-[#00E5FF] text-black shadow-[0_0_15px_#00E5FF]' : 'bg-white/10 text-slate-400 group-hover:text-[#00E5FF]'}`}>
+              <Aperture className={`w-4 h-4 transition-transform duration-700 ${isLensActive ? 'animate-[spin-slow_4s_linear_infinite]' : 'group-hover:rotate-90'}`} />
+              {isLensActive && (
+                <div className="absolute inset-0 rounded-full border border-[#00E5FF] animate-ping opacity-50" />
+              )}
+            </div>
+            
+            <span className={`font-semibold tracking-[0.2em] transition-colors duration-300 ${isLensActive ? 'text-[#00E5FF] drop-shadow-[0_0_8px_#00E5FF]' : ''}`}>
+              Orbital Lens
+            </span>
           </button>
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
@@ -484,9 +514,9 @@ export default function ObservatoryClient() {
         </div>
       </div>
 
-      {/* Intelligence Panel (Hidden when Location Book is open) */}
+      {/* Intelligence Panel */}
       <div
-        className={`absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-300 ${consoleMode === 'location' ? 'translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}
+        className={`absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-500 ease-in-out ${showIntelligencePanel ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}
       >
         <IntelligencePanel
           consoleMode={consoleMode}
@@ -497,6 +527,7 @@ export default function ObservatoryClient() {
           satellite={liveSelectedSatellite}
           orbitTrailsEnabled={orbitTrailsEnabled}
           loading={loading}
+          isLensActive={isLensActive}
           onClose={handleClearSelection}
           onAction={handlePanelAction}
         />

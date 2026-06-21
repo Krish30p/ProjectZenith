@@ -3,9 +3,13 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionTemplate, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Aperture, ChevronLeft, ChevronRight } from "lucide-react";
 
-export function TheSkyWeLost() {
+interface TheSkyWeLostProps {
+  onEnterTimeMachine?: () => void;
+}
+
+export function TheSkyWeLost({ onEnterTimeMachine }: TheSkyWeLostProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentCard, setCurrentCard] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -78,7 +82,7 @@ export function TheSkyWeLost() {
             className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none text-center px-4 bg-black/30 md:bg-transparent"
           >
             <h2 className="font-primary font-bold text-5xl md:text-7xl lg:text-9xl text-white tracking-tight mb-6 drop-shadow-[0_0_40px_rgba(0,0,0,0.8)]">
-              THE SKY WE LOST
+              SEE WHAT THE CITY HIDES
             </h2>
             <p className="font-primary text-xl md:text-3xl text-slate-200 max-w-3xl drop-shadow-[0_0_20px_rgba(0,0,0,0.9)] font-medium">
               The universe has not disappeared. <br/>
@@ -137,75 +141,109 @@ export function TheSkyWeLost() {
         </div>
       </div>
 
-      {/* Interactive Data Flashcards Section */}
+      {/* Interactive Data Flashcards Section & Cosmic Time Machine Entry */}
       <div className="relative z-40 bg-[#020617] py-32 px-4 sm:px-6 lg:px-8 shadow-[0_-50px_100px_rgba(2,6,23,1)] overflow-hidden">
-        <div className="max-w-4xl mx-auto relative min-h-[500px] flex items-center justify-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 relative min-h-[500px] items-center">
           
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={currentCard}
-              initial={{ opacity: 0, x: direction * 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction * -50 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute w-full max-w-2xl px-12 md:px-0"
-            >
-              <div className="p-10 md:p-14 rounded-[2rem] bg-white/[0.03] border border-white/10 backdrop-blur-2xl relative overflow-hidden group shadow-2xl">
-                <div className={`absolute inset-0 bg-gradient-to-br ${flashcards[currentCard].color} to-transparent opacity-50`} />
-                <div className="relative z-10 text-center">
-                  <h3 className="font-primary text-slate-400 text-sm tracking-[0.2em] uppercase mb-8 font-semibold">
-                    {flashcards[currentCard].title}
-                  </h3>
-                  <div className="flex items-center justify-center gap-4 mb-6">
-                    <span className="font-primary text-7xl md:text-9xl font-bold text-white tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                      {flashcards[currentCard].value}
-                    </span>
+          {/* Left Column: Flashcards */}
+          <div className="relative w-full min-h-[400px] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentCard}
+                initial={{ opacity: 0, x: direction * 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: direction * -50 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute w-full px-12 md:px-0"
+              >
+                <div className="p-10 md:p-14 rounded-[2rem] bg-white/[0.03] border border-white/10 backdrop-blur-2xl relative overflow-hidden group shadow-2xl">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${flashcards[currentCard].color} to-transparent opacity-50`} />
+                  <div className="relative z-10 text-center">
+                    <h3 className="font-primary text-slate-400 text-sm tracking-[0.2em] uppercase mb-8 font-semibold">
+                      {flashcards[currentCard].title}
+                    </h3>
+                    <div className="flex items-center justify-center gap-4 mb-6">
+                      <span className="font-primary text-7xl md:text-9xl font-bold text-white tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                        {flashcards[currentCard].value}
+                      </span>
+                    </div>
+                    <div className="h-[1px] w-24 bg-white/20 mx-auto mb-8" />
+                    <p 
+                      className="text-slate-300 font-primary text-xl md:text-2xl leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: flashcards[currentCard].description }}
+                    />
                   </div>
-                  <div className="h-[1px] w-24 bg-white/20 mx-auto mb-8" />
-                  <p 
-                    className="text-slate-300 font-primary text-xl md:text-2xl leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: flashcards[currentCard].description }}
-                  />
                 </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
 
-          {/* Controls */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-16 z-50">
-            <button 
-              onClick={prevCard}
-              className="p-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:scale-110 transition-all backdrop-blur-md"
-              aria-label="Previous card"
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
+            {/* Controls */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-8 z-50">
+              <button 
+                onClick={prevCard}
+                className="p-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:scale-110 transition-all backdrop-blur-md"
+                aria-label="Previous card"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            </div>
+            <div className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-8 z-50">
+              <button 
+                onClick={nextCard}
+                className="p-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:scale-110 transition-all backdrop-blur-md"
+                aria-label="Next card"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            </div>
+            
+            {/* Pagination Indicators */}
+            <div className="absolute bottom-[-3rem] left-1/2 -translate-x-1/2 flex gap-3 z-50">
+              {flashcards.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setDirection(idx > currentCard ? 1 : -1);
+                    setCurrentCard(idx);
+                  }}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    idx === currentCard ? "w-8 bg-white" : "w-2 bg-white/20 hover:bg-white/50"
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
-          <div className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-16 z-50">
-            <button 
-              onClick={nextCard}
-              className="p-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:scale-110 transition-all backdrop-blur-md"
-              aria-label="Next card"
+
+          {/* Right Column: Cosmic Time Machine */}
+          <div className="relative w-full flex flex-col items-center lg:items-start text-center lg:text-left px-8 py-12 lg:py-0 border-t lg:border-t-0 lg:border-l border-white/10 lg:pl-16">
+            {/* Ambient portal glow for the button area */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,229,255,0.05)_0%,transparent_70%)] animate-pulse pointer-events-none" />
+            
+            <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-xs font-bold tracking-widest uppercase">
+              <Aperture className="w-4 h-4 animate-[spin-slow_4s_linear_infinite]" />
+              Temporal Observatory
+            </div>
+            
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
+              Cosmic Time Machine
+            </h2>
+
+            <div className="text-lg md:text-xl text-slate-300 mb-12 leading-relaxed space-y-4">
+              <p>Do you want to see the sky before we changed it?</p>
+              <p>Step inside and watch the sky change.</p>
+            </div>
+
+            <button
+              onClick={onEnterTimeMachine}
+              className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border border-white/20 transition-all hover:border-[#00E5FF] hover:shadow-[0_0_30px_rgba(0,229,255,0.3)] w-full sm:w-auto"
             >
-              <ChevronRight className="w-8 h-8" />
+              <div className="absolute inset-0 bg-white/5 group-hover:bg-[#00E5FF]/10 transition-colors" />
+              <span className="relative z-10 text-white font-medium tracking-wide group-hover:text-[#00E5FF] transition-colors flex items-center justify-center gap-3">
+                Enter the Machine
+                <Aperture className="w-4 h-4 group-hover:animate-spin" />
+              </span>
             </button>
-          </div>
-          
-          {/* Pagination Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-50">
-            {flashcards.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setDirection(idx > currentCard ? 1 : -1);
-                  setCurrentCard(idx);
-                }}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  idx === currentCard ? "w-8 bg-white" : "w-2 bg-white/20 hover:bg-white/50"
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
           </div>
 
         </div>

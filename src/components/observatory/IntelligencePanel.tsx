@@ -46,6 +46,7 @@ interface Props {
   satellite: (LiveSatellite & { source?: string; layerFetchedAt?: number }) | null;
   orbitTrailsEnabled?: boolean;
   loading: boolean;
+  isLensActive?: boolean;
   onClose: () => void;
   onAction?: (action: 'center' | 'toggle-trail') => void;
 }
@@ -119,6 +120,7 @@ export default function IntelligencePanel({
   satellite,
   orbitTrailsEnabled = true,
   loading,
+  isLensActive,
   onClose,
   onAction
 }: Props) {
@@ -150,22 +152,7 @@ export default function IntelligencePanel({
     }
   }, [consoleMode, location]);
 
-  const satelliteInsight = useMemo(() => {
-    if (!satellite) return "";
-    let regime = "";
-    if (satellite.altitudeKm < 2000) regime = "Operating in Low Earth Orbit (LEO). ";
-    else if (satellite.altitudeKm > 35000) regime = "Operating in Geosynchronous Orbit (GEO). ";
-    else regime = "Operating in Medium Earth Orbit (MEO). ";
-
-    switch(satellite.category) {
-      case 'stations': return regime + "A crewed human spaceflight outpost orbiting the Earth.";
-      case 'gps': return regime + "A critical node in the global positioning and navigation constellation.";
-      case 'weather': return regime + "An Earth-observation satellite providing critical meteorological and climate data.";
-      case 'starlink': return regime + "A low Earth orbit broadband internet node in the Starlink megaconstellation.";
-      case 'iridium': return regime + "A communications satellite providing global voice and data coverage.";
-      default: return regime + "An orbital asset actively tracked by Zenith systems.";
-    }
-  }, [satellite]);
+  // satelliteInsight useMemo removed completely.
 
   const totalTracked = useMemo(() => Object.values(satellitesMap).reduce((sum, payload) => sum + (payload?.satellites?.length || 0), 0), [satellitesMap]);
   const activeCount = useMemo(() => Object.values(activeLayers).filter(Boolean).length, [activeLayers]);
@@ -284,8 +271,103 @@ export default function IntelligencePanel({
     </div>
   );
 
+  const renderDataFreshness = (sat: NonNullable<typeof satellite>) => {
+    const tleAgeHours = (Date.now() - sat.tleEpoch) / (1000 * 60 * 60);
+    let freshBadge = { label: 'FRESH', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' };
+    if (tleAgeHours > 72) freshBadge = { label: 'DECAYED', color: 'text-rose-500', bg: 'bg-rose-500/10 border-rose-500/20' };
+    else if (tleAgeHours > 48) freshBadge = { label: 'STALE', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/20' };
+    else if (tleAgeHours > 24) freshBadge = { label: 'AGING', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' };
+
+    let sourceLabel = 'Unknown';
+    let sourceColor = 'text-slate-400';
+    if (sat.source === 'live-celestrak') { sourceLabel = 'Live CelesTrak'; sourceColor = 'text-emerald-400'; }
+    else if (sat.source === 'cached-celestrak') { sourceLabel = 'Cached Upstream'; sourceColor = 'text-blue-400'; }
+    else if (sat.source === 'local-fallback') { sourceLabel = 'Local Fallback'; sourceColor = 'text-amber-500'; }
+
+    return (
+      <div className="bg-white/4 border border-white/10 rounded-2xl p-4">
+        <h3 className="text-[11px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+          <Layers className="w-3.5 h-3.5" /> Telemetry Quality
+        </h3>
+        
+        <div className="space-y-4">
+          {/* Source Truth */}
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+            <div className="text-[9px] text-slate-500 font-mono tracking-widest uppercase mb-1">Source Truth</div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-slate-300">Origin</span>
+              <span className={`text-xs font-mono ${sourceColor}`}>{sourceLabel}</span>
+            </div>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-slate-500">Fetched</span>
+              <span className="text-white font-mono text-xs">{formatDistanceToNow(new Date(sat.layerFetchedAt || sat.fetchedAt))} ago</span>
+            </div>
+          </div>
+
+          {/* Orbital Freshness */}
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+            <div className="text-[9px] text-slate-500 font-mono tracking-widest uppercase mb-1">Orbital Freshness</div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-slate-300">TLE Age Status</span>
+              <span className={`px-2 py-0.5 border rounded-sm text-[10px] font-mono tracking-widest uppercase ${freshBadge.bg} ${freshBadge.color}`}>
+                {freshBadge.label}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-slate-500">Epoch</span>
+              <span className="text-white font-mono text-xs">{formatDistanceToNow(new Date(sat.tleEpoch))} ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMissionIdentity = (sat: NonNullable<typeof satellite>) => {
+    let context = "";
+    let role = "";
+    
+    if (sat.category === 'stations') {
+      context = "Human Spaceflight & Orbital Outpost";
+      role = "Continuously occupied multi-nation orbital laboratory operating in very Low Earth Orbit (vLEO) for rapid resupply and radiation shielding.";
+    } else if (sat.category === 'gps') {
+      context = "Global Navigation Constellation (MEO)";
+      role = "Semi-synchronous navigation and timing node ensuring consistent planetary signal visibility.";
+    } else if (sat.category === 'weather') {
+      context = "Meteorological & Earth Observation";
+      role = "Climate telemetry and severe weather tracking from optimized orbital regimes.";
+    } else if (sat.category === 'starlink') {
+      context = "Broadband LEO Mega-Constellation";
+      role = "Highly dense, low-latency planetary communications relay network.";
+    } else if (sat.category === 'iridium') {
+      context = "Satcom Relay Network";
+      role = "Global cross-linked voice and data mesh network utilizing inter-satellite laser or RF links.";
+    } else {
+      context = "Tracked Orbital Asset";
+      role = "An active object traversing Earth orbit, actively tracked by Zenith systems.";
+    }
+
+    return (
+      <div className="bg-gradient-to-br from-[#00E5FF]/5 to-transparent border border-[#00E5FF]/10 rounded-2xl p-4">
+        <h3 className="text-[11px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+          <Info className="w-3.5 h-3.5 text-[#00E5FF]" /> Mission Identity
+        </h3>
+        <div className="space-y-3">
+          <div>
+            <p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase mb-0.5">Operational Context</p>
+            <p className="text-sm text-white font-medium">{context}</p>
+          </div>
+          <div>
+            <p className="text-[9px] text-slate-500 font-mono tracking-widest uppercase mb-0.5">Orbital Role</p>
+            <p className="text-xs text-slate-300 leading-relaxed italic">{role}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderLocationMode = () => {
-    return null; // Location mode is now handled by CosmicBookOverlay
+    return renderDefaultMode();
   };
 
   const renderSatelliteMode = () => {
@@ -324,36 +406,13 @@ export default function IntelligencePanel({
           </div>
         </div>
 
-        {/* 3. ORBIT HEALTH / FRESHNESS */}
-        <div className="bg-white/4 border border-white/10 rounded-2xl p-4">
-          <h3 className="text-[11px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-            <Layers className="w-3.5 h-3.5" /> Data Freshness
-          </h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-slate-400">Status</span>
-              {Date.now() - (satellite.layerFetchedAt || satellite.fetchedAt) > 24 * 60 * 60 * 1000 ? (
-                <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-sm text-xs font-mono">STALE</span>
-              ) : (
-                <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-sm text-xs font-mono">FRESH</span>
-              )}
-            </div>
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-slate-400">TLE Epoch</span>
-              <span className="text-white font-mono text-xs">{formatDistanceToNow(new Date(satellite.tleEpoch))} ago</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-slate-400">Fetched At</span>
-              <span className="text-white font-mono text-xs">{formatDistanceToNow(new Date(satellite.layerFetchedAt || satellite.fetchedAt))} ago</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-400">Source</span>
-              <span className="text-slate-300 text-xs font-mono">{satellite.source === 'live-celestrak' ? 'Live CelesTrak' : 'Local Fallback'}</span>
-            </div>
-          </div>
-        </div>
+        {/* 3. MISSION IDENTITY */}
+        {renderMissionIdentity(satellite)}
 
-        {/* 4. ORBIT ACTIONS */}
+        {/* 4. ORBIT HEALTH / FRESHNESS */}
+        {renderDataFreshness(satellite)}
+
+        {/* 5. ORBIT ACTIONS */}
         <div className="bg-white/4 border border-white/10 rounded-2xl p-4">
           <h3 className="text-[11px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
             <Route className="w-3.5 h-3.5" /> Orbit Actions
@@ -371,12 +430,6 @@ export default function IntelligencePanel({
                </button>
             )}
           </div>
-        </div>
-
-        {/* 5. SATELLITE INSIGHT */}
-        <div className="bg-black/20 border border-white/5 rounded-xl p-4 flex items-start gap-3">
-          <Info className="w-4 h-4 text-[#00E5FF] mt-0.5 shrink-0" />
-          <p className="text-sm text-slate-300 leading-relaxed italic">{satelliteInsight}</p>
         </div>
       </div>
     );
@@ -414,7 +467,13 @@ export default function IntelligencePanel({
           </div>
         </div>
 
-        {/* 3. ISS ORBIT TRACK */}
+        {/* 3. ISS MISSION IDENTITY */}
+        {renderMissionIdentity(satellite)}
+
+        {/* 4. ISS ORBIT HEALTH / FRESHNESS */}
+        {renderDataFreshness(satellite)}
+
+        {/* 5. ISS ORBIT TRACK */}
         <div className="bg-white/4 border border-white/10 rounded-2xl p-4">
           <h3 className="text-[11px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
             <Route className="w-3.5 h-3.5" /> Orbit Track Controls
@@ -461,6 +520,119 @@ export default function IntelligencePanel({
     );
   };
 
+  const [activeLensCard, setActiveLensCard] = useState<number | null>(null);
+
+  const renderLensMode = () => (
+    <div className="flex flex-col justify-between gap-6 p-6 h-full pb-12">
+      
+      {/* Overview Flashcard */}
+      <motion.div
+        layout
+        whileHover={{ scale: 1.02, y: -2 }}
+        className="relative flex-1 flex flex-col justify-center group bg-[#020617]/80 backdrop-blur-2xl border border-[#00E5FF]/30 rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,229,255,0.15)] cursor-default"
+      >
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00E5FF] to-transparent opacity-70" />
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Eye className="w-6 h-6 text-[#00E5FF]" />
+            <h3 className="font-mono text-base tracking-widest text-white uppercase">Orbital Lens</h3>
+          </div>
+          <p className="text-base leading-relaxed text-slate-300">
+            Earth-surface overhead congestion derived from Zenith’s live orbital traffic dataset.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Representation Flashcard */}
+      <motion.div
+        layout
+        whileHover={{ scale: 1.01, y: -2 }}
+        className="flex-1 flex flex-col justify-center bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-colors shadow-lg cursor-default"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Target className="w-5 h-5 text-emerald-400" />
+          <h4 className="font-mono text-xs tracking-widest text-emerald-400 uppercase">What this represents</h4>
+        </div>
+        <p className="text-sm leading-relaxed text-slate-400">
+          This map visualizes <strong className="text-white font-medium">satellite density</strong>, not weather or temperature. It shows exactly where Zenith detects the densest concentration of tracked orbital objects currently overhead across the Earth.
+        </p>
+      </motion.div>
+
+      {/* Color Scale Flashcard */}
+      <motion.div
+        layout
+        whileHover={{ scale: 1.01, y: -2 }}
+        className="flex-1 flex flex-col justify-center bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-colors shadow-lg cursor-default"
+      >
+        <div className="flex items-center gap-2 mb-6">
+          <Activity className="w-5 h-5 text-amber-400" />
+          <h4 className="font-mono text-xs tracking-widest text-amber-400 uppercase">Congestion Intensity</h4>
+        </div>
+        
+        {/* Spectral Bar matching Cesium palette */}
+        <div className="h-4 w-full rounded-full shadow-[0_0_12px_rgba(255,255,255,0.1)] mb-5 relative overflow-hidden">
+           <div className="absolute inset-0" style={{
+             background: "linear-gradient(to right, rgba(20,0,80,0.9), rgba(0,229,255,1) 40%, rgba(255,229,0,1) 75%, rgba(255,0,0,1) 95%, rgba(255,255,255,1) 100%)"
+           }} />
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase">Sparse</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider text-[#00E5FF] uppercase">Moderate</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider text-yellow-400 uppercase">High</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider text-red-500 uppercase">Severe</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* About / Dossier Flashcard */}
+      <motion.div
+        layout
+        onClick={() => setActiveLensCard(activeLensCard === 4 ? null : 4)}
+        className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-[#00E5FF]/40 hover:bg-[#00E5FF]/5 transition-all shadow-lg cursor-pointer group shrink-0"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Info className="w-5 h-5 text-slate-400 group-hover:text-[#00E5FF] transition-colors" />
+            <h4 className="font-mono text-xs tracking-widest text-slate-400 group-hover:text-[#00E5FF] uppercase transition-colors">About this lens</h4>
+          </div>
+          <ChevronLeft className={`w-5 h-5 text-slate-500 group-hover:text-[#00E5FF] transition-all duration-300 ${activeLensCard === 4 ? '-rotate-90' : ''}`} />
+        </div>
+        
+        <AnimatePresence>
+          {activeLensCard === 4 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: "auto", opacity: 1, marginTop: 20 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-5 border-t border-white/10 space-y-4">
+                <p className="text-xs leading-relaxed text-slate-400 font-mono">
+                  &gt; Generated natively from Zenith's live propagated dataset.
+                </p>
+                <p className="text-xs leading-relaxed text-slate-400 font-mono">
+                  &gt; Each grid region is colored mathematically by the real-time density of tracking coordinates intersecting the area.
+                </p>
+                <p className="text-xs leading-relaxed text-slate-400 font-mono">
+                  &gt; Updates incrementally to reflect the constantly shifting orbital shell configurations.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+    </div>
+  );
+
   return (
     <div className="h-full w-full bg-[#020d1f]/90 backdrop-blur-2xl border-t md:border-t-0 md:border-l border-white/10 flex flex-col overflow-hidden shadow-[0_-20px_60px_rgba(0,0,0,0.5)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.5)]">
 
@@ -482,8 +654,8 @@ export default function IntelligencePanel({
         </div>
         <div className="flex items-center gap-3">
            <span className="text-[10px] font-mono text-slate-500 uppercase">{activeCount} Layers</span>
-           <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[9px] font-mono tracking-widest text-slate-400 uppercase">
-             {consoleMode} MODE
+           <div className={`px-2 py-1 rounded border text-[9px] font-mono tracking-widest uppercase transition-colors ${isLensActive ? 'bg-[#00E5FF]/10 border-[#00E5FF]/30 text-[#00E5FF]' : 'bg-white/5 border-white/10 text-slate-400'}`}>
+             {isLensActive ? 'LENS MODE' : `${consoleMode} MODE`}
            </div>
         </div>
       </div>
@@ -515,10 +687,16 @@ export default function IntelligencePanel({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {consoleMode === 'default' && renderDefaultMode()}
-              {consoleMode === 'location' && renderLocationMode()}
-              {consoleMode === 'satellite' && renderSatelliteMode()}
-              {consoleMode === 'iss' && renderIssMode()}
+              {isLensActive ? (
+                renderLensMode()
+              ) : (
+                <>
+                  {consoleMode === 'default' && renderDefaultMode()}
+                  {consoleMode === 'location' && renderLocationMode()}
+                  {consoleMode === 'satellite' && renderSatelliteMode()}
+                  {consoleMode === 'iss' && renderIssMode()}
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
