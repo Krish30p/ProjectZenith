@@ -1,363 +1,131 @@
-# Zenith — The Celestial Eye
+<div align="center">
+
+# 🛰️ Zenith — The Celestial Eye
 
 ### A Real-Time Interactive Orbital Observatory for Earth, Sky, and Satellite Intelligence
 
-> **Zenith** is a real-time celestial observatory that allows users to explore **what is happening above any location on Earth** through a cinematic 3D globe, live satellite tracking, sky-condition intelligence, and orbital analytics.
-> It blends **astronomy, geospatial interaction, and orbital awareness** into a single observatory experience.
+[![Next.js](https://img.shields.io/badge/Next.js-App%20Router-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
+
+**Zenith** lets you explore what's happening above *any* location on Earth — right now — through a cinematic 3D globe, live satellite tracking, sky-condition intelligence, and orbital congestion analytics.
+
+[Live Demo](#) 
+
+</div>
 
 ---
 
-# Overview
+## Table of Contents
 
-**Zenith — The Celestial Eye** is a **real-time interactive orbital observatory** built to answer one core question:
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Why Zenith](#why-zenith)
+- [Core Features](#core-features)
+- [Hackathon Requirements Mapping](#hackathon-requirements-mapping)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [API Routes](#api-routes)
+- [Real-Time Data Sources](#real-time-data-sources)
+- [Data Pipeline](#data-pipeline)
+- [Responsive Design Strategy](#responsive-design-strategy)
+- [Performance & Refresh Strategy](#performance--refresh-strategy)
+- [Roadmap](#roadmap)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+**Zenith — The Celestial Eye** is a real-time interactive orbital observatory built to answer one core question:
 
 > **What is happening in the sky above any place on Earth right now?**
 
-Zenith allows a user to:
+With Zenith you can:
 
-* interact with a **3D globe**
-* click or search **any location on Earth**
-* inspect **real-time sky conditions**
-* view **visible celestial objects**
-* track **live orbital satellites**
-* monitor **ISS position and passes**
-* understand **orbital congestion / traffic density**
-* explore all of this through a **cinematic, space-themed observatory interface**
+- Interact with a fully navigable **3D globe**
+- Click or search **any location on Earth**
+- Inspect **real-time sky conditions** (cloud cover, visibility, moon phase, visible planets)
+- Track **live orbital satellites** by category (ISS, GPS, weather, Starlink, Iridium)
+- Monitor **ISS position and upcoming passes**
+- Visualize **orbital congestion / traffic density** across the planet
 
-Rather than presenting raw API responses in a plain dashboard, Zenith transforms celestial and orbital data into an immersive **mission-control observatory experience**.
+Rather than presenting raw API responses on a plain dashboard, Zenith turns celestial and orbital data into an immersive, mission-control-style observatory experience.
 
----
+## Problem Statement
 
-# Problem Statement
+The night sky above us is shaped by several independent layers of information: weather and cloud cover, moon phase and visibility, visible planets, satellite traffic, ISS overhead passes, and the growing congestion caused by modern satellite constellations.
 
-The night sky above us is influenced by multiple layers of information:
+Most existing tools surface only **one layer at a time** — weather, astronomy, *or* satellites. Zenith unifies all of them into a single interactive platform, so a user can explore both:
 
-* weather and cloud cover
-* moon phase and visibility
-* visible planets
-* satellite traffic
-* ISS overhead passes
-* orbital congestion caused by modern constellations
+1. **What a person can observe** from a given location, and
+2. **What is happening in orbit** above that location.
 
-Most existing tools focus on **only one layer** at a time — weather, astronomy, or satellites.
-**Zenith** unifies these dimensions into one interactive platform so a user can explore both:
+## Why Zenith
 
-1. **What a person can observe from a location**
-2. **What is happening in orbit above that location**
+| | |
+|---|---|
+| 🌍 **Interactive 3D Earth observatory** | Powered by `react-globe.gl` / Three.js |
+| 🌦️ **Location-based sky intelligence** | Live weather + astronomy context per coordinate |
+| 🛰️ **Real-time satellite & ISS tracking** | Multiple orbital categories, live propagation |
+| 🔥 **Orbital Lens** | Congestion / density heatmap of orbital traffic |
+| 🎬 **Mission-style UI** | Cosmic storytelling and observatory theming |
+| 📱 **Fully responsive** | Desktop, tablet, and mobile layouts |
+| ⚡ **Single-app architecture** | One Next.js + TypeScript codebase, no separate backend |
 
----
+## Core Features
 
-# Project Highlights
+### 1. Launch Observatory — Interactive 3D Globe
+A full-screen 3D globe where users can rotate and zoom around Earth, click any coordinate, search a city/region/landmark, switch between orbital layers, and open different observatory intelligence modes. This is the main entry point into the experience.
 
-## What makes Zenith special
+### 2. Location Intelligence / Celestial Atlas
+Selecting a location generates a location-specific observatory profile, including city/country/region, lat/lon, timezone and local time, cloud cover, visibility, moon phase, visible planets, a sky quality score, orbital congestion context, satellites overhead, and the next ISS pass for that place.
 
-* **Interactive 3D Earth observatory** powered by Cesium
-* **Location-based sky intelligence** using live weather + astronomy context
-* **Real-time satellite and ISS tracking**
-* **Orbital Lens**: congestion / density visualization for orbital traffic
-* **Premium mission-style UI** with cosmic storytelling and observatory theming
-* **Responsive design** for desktop, tablet, and mobile
-* **Single-app architecture** built entirely in **Next.js + TypeScript**
+### 3. Real-Time Satellite Tracking
+Inspect orbital categories — **Stations/ISS, GPS/Navigation, Weather Satellites, Starlink, Iridium** — with telemetry including name + NORAD ID, live propagated lat/lon, altitude, velocity, inclination, TLE epoch/freshness, and observability status.
 
----
+### 4. ISS Mission Mode
+A dedicated tracking experience showing live ISS position, orbital state, altitude and velocity, and pass predictions for a selected location.
 
-# Core Features
+### 5. Orbital Lens — Space Congestion Heatmap
+Visualizes orbital traffic *density* across Earth (rather than isolated satellite markers) to help answer: **where is orbital space currently most crowded?** Highlights dense orbital corridors and how congestion shifts at a planetary scale.
 
-## 1) Launch Observatory — Interactive 3D Globe
+### 6. Sky Window
+A human-facing view of the sky above a chosen location — what's visible right now, which planets may be observable, current moon phase, whether conditions are good for observation, and whether an ISS pass is coming up.
 
-Zenith’s core interface is a **full-screen 3D globe** where the user can:
+### 7. Cosmic Time Machine
+A narrative visualization module contrasting quieter historical orbital eras with the modern orbital boom and projected future congestion — giving Zenith both operational and educational value.
 
-* rotate and zoom around Earth
-* click on any coordinate to inspect that location
-* search for a city / region / landmark
-* switch between orbital layers
-* open different observatory intelligence modes
+## Capabilities at a Glance
 
-This globe acts as the main entry point into the entire observatory experience.
+| Requirement | How Zenith Satisfies It |
+|---|---|
+| **Functional interactive map / 3D globe** capturing user-selected coordinates | Full-screen 3D globe with click-to-select coordinates and location search |
+| **Dynamic display of celestial bodies** above the selected location | Live weather, visibility, moon phase, visible planets, ISS position/passes, and orbital traffic layers, all recomputed per location |
+| **Advanced responsive CSS** (Grid/Flexbox) across devices | CSS Grid, Flexbox, and Tailwind responsive breakpoints with adaptive overlays/panels for mobile, tablet, and desktop |
+| **Feature richness / creative extras** (orbit paths, speed trackers, constellation overlays) | Satellite tracking, ISS pass intelligence, Orbital Lens congestion heatmap, sky observability metrics, and the Cosmic Time Machine storytelling module |
+| **Code structure & documentation** | Modular Next.js app with feature-based components, typed route handlers, reusable utilities, and this README |
 
----
+## Tech Stack
 
-## 2) Location Intelligence / Celestial Atlas
+**Frontend**
+- Next.js (App Router) · React · TypeScript · Tailwind CSS · Framer Motion · `react-globe.gl` (Three.js)
 
-When a location is selected, Zenith generates a **location-specific observatory profile**.
+**Data / Orbital / Astronomy Layer**
+- `satellite.js` · Astronomy Engine · custom telemetry aggregation utilities
 
-### It can display:
+**Backend**
+- Implemented entirely as Next.js Route Handlers with server-side utilities and in-app caching/refresh logic — **no separate Python/FastAPI backend**.
 
-* city / country / region
-* latitude / longitude
-* timezone + local time
-* cloud cover
-* visibility
-* moon phase
-* visible planets
-* sky quality score
-* orbital grief / orbital congestion context
-* satellites overhead
-* next ISS pass for the selected place
+## Architecture
 
-This transforms a simple map click into a **live observatory report** for that location.
-
----
-
-## 3) Real-Time Satellite Tracking
-
-Zenith supports orbital inspection of multiple satellite categories, such as:
-
-* **Stations / ISS**
-* **GPS / Navigation**
-* **Weather Satellites**
-* **Starlink**
-* **Iridium Communications**
-
-### Satellite telemetry can include:
-
-* name + NORAD ID
-* live propagated latitude / longitude
-* altitude
-* velocity
-* inclination
-* TLE epoch / freshness metadata
-* source status / observability context
-
----
-
-## 4) ISS Mission Mode
-
-Zenith includes a dedicated ISS tracking experience with:
-
-* live ISS position
-* orbital state
-* altitude and velocity
-* pass prediction for a selected location
-* contextual observatory display when the ISS is the selected target
-
----
-
-## 5) Orbital Lens — Space Congestion Heatmap
-
-Orbital Lens is Zenith’s global congestion visualization layer.
-
-Instead of only showing individual satellites as isolated markers, it visualizes **orbital traffic density** across Earth to help answer:
-
-> **Where is orbital space currently most crowded?**
-
-This helps users understand:
-
-* dense orbital corridors
-* regions with high satellite overhead activity
-* how orbital congestion changes visually at a planetary scale
-
----
-
-## 6) Sky Window
-
-Sky Window is a dedicated observatory experience focused on the **human-facing sky above a chosen location**.
-
-It is designed to answer:
-
-* What does the sky above this place look like right now?
-* What planets may be visible?
-* What is the moon phase here?
-* Are the conditions good for observation?
-* Is an ISS pass expected?
-
----
-
-## 7) Cosmic Time Machine
-
-Cosmic Time Machine is Zenith’s narrative visualization module that explores how orbital traffic has evolved across time.
-
-It is designed as a storytelling layer that contrasts:
-
-* earlier, quieter orbital eras
-* the modern orbital boom
-* projected future congestion scenarios
-
-This gives Zenith both **live operational value** and **educational / awareness impact**.
-
----
-
-# How It Meets the Hackathon Requirements
-
-## 1) Interactivity — Functional Interactive Map / 3D Globe
-
-Zenith includes a **fully interactive 3D globe** that:
-
-* captures user-selected coordinates
-* supports location search
-* dynamically updates observatory intelligence for that location
-
-This directly satisfies the requirement for:
-
-> **“A functional interactive map or 3D globe that captures user-selected coordinates.”**
-
----
-
-## 2) Real-Time Data Fetching
-
-Zenith dynamically fetches and computes live celestial/orbital context for the selected location.
-
-### Examples of live / near-live information shown:
-
-* weather and cloud cover
-* visibility
-* timezone / local time
-* moon phase
-* visible planets
-* ISS position and pass predictions
-* live orbital traffic layers
-* propagated satellite telemetry
-
-This satisfies the requirement for:
-
-> **“Dynamic display of celestial bodies currently above the selected geographic location.”**
-
----
-
-## 3) Responsive UI
-
-Zenith is designed using **modern responsive layout techniques** and adapts across:
-
-* **desktop**
-* **tablet**
-* **mobile**
-
-The project uses:
-
-* **CSS Grid**
-* **Flexbox**
-* **responsive Tailwind utilities**
-* adaptive overlays / panels / stacked content layouts
-
-This directly addresses:
-
-> **“Application must use advanced CSS (Grid/Flexbox) to ensure a high-quality experience on mobile, tablet, and desktop.”**
-
----
-
-## 4) Feature Richness
-
-Zenith goes beyond a simple location weather panel by including:
-
-* real-time satellite tracking
-* ISS pass intelligence
-* orbital congestion heatmaps
-* location-based sky observability metrics
-* mission-style celestial dashboards
-* immersive storytelling modules like Cosmic Time Machine
-
-This aligns strongly with the evaluation criterion for:
-
-> **creative extras such as orbit paths, speed trackers, or constellation overlays**
-
----
-
-## 5) Code Structure & Documentation
-
-The application is structured as a **modular Next.js project** with:
-
-* feature-based components
-* route handlers for real-time APIs
-* reusable observatory utilities
-* typed payloads / contracts
-* a dedicated README explaining setup, APIs, architecture, and features
-
----
-
-# Real-Time Data Sources
-
-Zenith combines multiple real-time and derived sources to build a complete observatory experience.
-
-## 1. CelesTrak
-
-Used for:
-
-* satellite category feeds
-* TLE/orbital element sets
-* orbital layers such as stations, GPS, weather, Starlink, and Iridium
-* live ISS orbital projection data
-
-**Purpose:** Enables live satellite propagation, our custom native ISS prediction engine, orbital visualization, and satellite-layer rendering.
-
----
-
-## 2. Open-Meteo
-
-Used for:
-
-* cloud cover
-* visibility
-* weather observability inputs
-* timezone-related support for selected locations
-
-**Purpose:** Helps determine whether the sky is actually viewable from a location.
-
----
-
-## 3. Nominatim / OpenStreetMap Reverse Geocoding
-
-Used for:
-
-* converting coordinates into human-readable place names
-* resolving city / country / region information for clicked locations
-
----
-
-## 4. Astronomy Engine
-
-Used for:
-
-* moon phase and illumination logic
-* visible planet calculations
-* astronomy-based sky context for selected locations
-
----
-
-## 5. react-globe.gl (Three.js)
-
-Used for:
-
-* the interactive 3D globe
-* geospatial rendering and camera navigation
-* immersive Earth-based observatory visualization
-
-
----
-
-# Tech Stack
-
-## Frontend
-
-* **Next.js (App Router)**
-* **React**
-* **TypeScript**
-* **Tailwind CSS**
-* **Framer Motion**
-* **react-globe.gl (Three.js)**
-
-## Data / Orbital / Astronomy Layer
-
-* **satellite.js**
-* **Astronomy Engine**
-* custom telemetry aggregation utilities
-
-## Backend Layer
-
-Zenith is implemented as a **single Next.js application** using:
-
-* **Next.js Route Handlers**
-* server-side utility functions
-* caching / refresh logic within the app
-
-> No separate Python/FastAPI backend is used in the final architecture.
-
----
-
-# Architecture Overview
-
-Zenith is intentionally built as a **single-app observatory platform**.
-
-## High-Level Flow
+Zenith is intentionally built as a single-app observatory platform:
 
 ```text
 User interacts with Zenith
@@ -366,7 +134,7 @@ User interacts with Zenith
    ↓
 Location selection or satellite selection
    ↓
-Next.js route handlers fetch / aggregate live data from:
+Next.js route handlers fetch & aggregate live data from:
    - CelesTrak
    - Open-Meteo
    - Nominatim
@@ -381,347 +149,209 @@ Zenith renders feature-specific UI:
    - Orbital Lens
    - Sky Window
    - Time Machine
-
 ```
 
----
+**Feature walkthrough**
 
-# Feature Walkthrough
+- **Landing Experience** — introduces Zenith's identity and the Cosmic Time Machine, with entry into the Launch Observatory.
+- **Launch Observatory** — full-screen mode with the 3D globe, search, layer toggles, satellite markers, and mission console overlays.
+- **Location selection flow** — click/search a place → Zenith captures coordinates → resolves name + telemetry → observatory UI updates.
+- **Satellite selection flow** — select an orbital object → switch to satellite telemetry mode → display live propagated orbital state.
+- **Orbital Lens flow** — activate the lens → compute congestion patterns → render heatmap overlays.
 
-## A. Landing Experience
+## Project Structure
 
-The landing page introduces Zenith’s cosmic identity and narrative layers, including the **Cosmic Time Machine** and entry into the **Launch Observatory**.
+> File names may evolve during UI refactors, but the structure stays organized around observatory features and route-level data fetching.
 
----
-
-## B. Launch Observatory
-
-The user enters a full-screen observatory mode with:
-
-* the interactive 3D globe
-* search
-* layer toggles
-* satellite markers
-* mission console panels / overlays
-
----
-
-## C. Location Selection Flow
-
-1. User clicks a location or searches for one
-2. Zenith captures the coordinates
-3. Zenith resolves the location name and telemetry
-4. Observatory UI updates with sky and orbital intelligence for that place
-
----
-
-## D. Satellite Selection Flow
-
-1. User selects a satellite / orbital object
-2. Zenith switches into satellite-specific telemetry mode
-3. Live propagated orbital state is displayed
-
----
-
-## E. Orbital Lens Flow
-
-1. User activates Orbital Lens
-2. Zenith computes / visualizes orbital congestion patterns
-3. Heatmap overlays help users understand where orbital traffic is dense
-
----
-
-# Project Structure
-
-> The exact file names may evolve during UI refactors, but the structure is organized around observatory features and route-level data fetching.
-
-
+```text
 ProjectZenith/
-├── public/                     # Static assets (textures, images)
+├── public/                          # Static assets (textures, images)
 ├── src/
-│   ├── app/                    # Next.js 14 App Router
-│   │   ├── api/                # Backend API Routes
-│   │   │   ├── iss-pass/       # Custom ISS prediction engine
-│   │   │   ├── satellites/     # CelesTrak TLE fetching & parsing
-│   │   │   └── telemetry/      # Open-Meteo & Astronomy Engine aggregator
-│   │   ├── observatory/        # Main Observatory route
+│   ├── app/                         # Next.js App Router
+│   │   ├── api/                     # Backend API routes
+│   │   │   ├── iss/                 # Live ISS position endpoint
+│   │   │   ├── iss-pass/            # Custom ISS prediction engine
+│   │   │   ├── satellites/          # CelesTrak TLE fetching & parsing
+│   │   │   └── telemetry/           # Open-Meteo & Astronomy Engine aggregator
+│   │   ├── observatory/             # Main Observatory route
 │   │   │   └── page.tsx
-│   │   ├── sky-window/         # Standalone Sky Window route
-│   │   │   └── page.tsx
-│   │   ├── layout.tsx          # Root layout & global providers
-│   │   └── page.tsx            # Landing page
-│   ├── components/             # React Components
-│   │   ├── observatory/        # Core Observatory Features
-│   │   │   ├── CosmicBookOverlay.tsx  # Location Atlas (Physical Book UI)
-│   │   │   ├── GlobeViewer.tsx        # 3D react-globe.gl component
-│   │   │   ├── IntelligencePanel.tsx  # Telemetry data & insights panel
-│   │   │   ├── LocationSearch.tsx     # Nominatim search component
-│   │   │   ├── ObservatoryClient.tsx  # Main Observatory hub & Orbital Lens
-│   │   │   └── SkyWindowClient.tsx    # Sky Window Rooftop Observatory UI
-│   │   ├── TheSkyWeLost.tsx    # Landing page storytelling section
-│   │   ├── HeroSection.tsx     # Landing page hero
-│   │   └── Navbar.tsx          # Global navigation
-│   └── lib/                    # Core Utilities
-│       └── satellites.ts       # Satellite math, categorization & TLE logic
-├── .env.local                  # Environment variables
-├── next.config.mjs             # Next.js configuration
-├── package.json                # Dependencies & scripts
-└── tailwind.config.ts          # Styling design system
-
-
----
-
-# API Routes
-
-## `/api/telemetry`
-
-Returns location-based observatory intelligence such as:
-
-* cloud cover
-* visibility
-* moon phase
-* visible planets
-* sky quality context
-* orbital observability metrics
-* place-based sky data for the selected coordinates
-
----
-
-## `/api/iss-pass`
-
-Returns ISS pass prediction data for a selected location.
-
----
-
-## `/api/satellites/[category]`
-
-Returns satellite category datasets for layers such as:
-
-* stations
-* GPS
-* weather
-* Starlink
-* Iridium
-
----
-
-# Environment Variables / API Services Used
-
-> **Important:** This project does **not** expose API keys in the repository.
-> Only the **names of services / tokens required** are documented below.
-
-## Environment Variables
-
-Create a `.env.local` file in the project root.
-
-### Required
-
-```env
-NEXT_PUBLIC_CESIUM_ION_TOKEN=your_cesium_ion_token
+│   │   ├── layout.tsx               # Root layout & global providers
+│   │   └── page.tsx                 # Landing page
+│   ├── components/
+│   │   ├── observatory/             # Core observatory features
+│   │   │   ├── CosmicBookOverlay.tsx   # Location Atlas ("physical book" UI)
+│   │   │   ├── GlobeViewer.tsx         # 3D react-globe.gl component
+│   │   │   ├── IntelligencePanel.tsx   # Telemetry data & insights panel
+│   │   │   ├── LocationSearch.tsx      # Nominatim search component
+│   │   │   ├── ObservatoryClient.tsx   # Main observatory hub & Orbital Lens
+│   │   │   └── OrbitalGriefGauge.tsx   # Orbital congestion gauge
+│   │   ├── time-machine/            # Cosmic Time Machine components
+│   │   ├── dashboard/                # Dashboard components
+│   │   ├── TheSkyWeLost.tsx          # Landing page storytelling section
+│   │   ├── HeroSection.tsx           # Landing page hero
+│   │   └── Navbar.tsx                # Global navigation
+│   └── lib/
+│       ├── config.ts                 # Environment variable validation (Zod)
+│       ├── satellites.ts             # Satellite math, categorization & TLE logic
+│       ├── timeMachineData.ts        # Time Machine narrative data
+│       └── utils.ts                  # General utilities
+├── .env.local                        # Environment variables (not committed)
+├── next.config.ts                    # Next.js + Webpack configuration
+├── package.json                      # Dependencies & scripts
+└── tsconfig.json                     # TypeScript configuration
 ```
 
----
+## Quick Start
 
-## External APIs / Services Used
+### Prerequisites
 
-### 1) react-globe.gl (Three.js)
-Used for the 3D interactive globe and orbital data visualization rendering.
+| Tool | Version |
+|---|---|
+| [Node.js](https://nodejs.org/) | v18.x or higher |
+| npm | v9.x or higher (bundled with Node.js) |
+| [Git](https://git-scm.com/) | latest |
 
-### 2) CelesTrak
-Used for live satellite TLE (Two-Line Element) data and orbital layers.
-
-### 3) Open-Meteo
-Used for real-time weather-based sky observability data such as cloud cover and visibility limits.
-
-### 4) Nominatim / OpenStreetMap
-Used for global location search, reverse geocoding, and place-name resolution.
-
-### 5) Astronomy Engine
-Used for calculating exact moon phases, celestial mechanics, and visible planet logic based on observer coordinates.
-
-### 6) Custom ISS Pass Engine (via satellite.js)
-Instead of relying on rate-limited external APIs like Open Notify, we built a native 24-hour orbital projection engine using `satellite.js`. It calculates live overhead ISS passes instantly on the server using CelesTrak data.
-
-> Depending on deployment strategy and future feature expansion, additional services can be integrated, but the above are the primary services and engines used in the current Zenith observatory stack.
-
----
-
-# Setup Instructions
-
-## 1) Clone the repository
+### Installation
 
 ```bash
-git clone <your-repository-url>
-cd zenith
-```
+# 1. Clone the repository
+git clone https://github.com/khrisha29/ProjectZenith.git
+cd ProjectZenith
 
-## 2) Install dependencies
-
-```bash
+# 2. Install dependencies
 npm install
-```
 
-## 3) Create a `.env.local` file
+# 3. Configure environment variables (see below)
+cp .env.example .env.local   # or create .env.local manually
 
-Add the required environment variable(s):
-
-```env
-NEXT_PUBLIC_CESIUM_ION_TOKEN=your_cesium_ion_token
-```
-
-## 4) Run the development server
-
-```bash
+# 4. Run the dev server
 npm run dev
 ```
 
-Open the app in your browser at:
+Then open **http://localhost:3000** in your browser.
 
-```bash
-http://localhost:3000
+## Environment Variables
+
+Create a `.env.local` file in the project root. No API keys are committed to this repository — only the variable names required are documented here.
+
+```env
+# Required — Cesium Ion Token for the 3D globe
+# Get one free at: https://ion.cesium.com/
+NEXT_PUBLIC_CESIUM_ION_TOKEN=your_cesium_ion_token
+
+# Optional — NASA API Key (reserved for future features)
+# Get one at: https://api.nasa.gov/
+# NASA_API_KEY=your_nasa_api_key
+
+# Pre-configured — do not change
+OPEN_METEO_BASE_URL=https://api.open-meteo.com
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
+CELESTRAK_BASE_URL=https://celestrak.org
 ```
 
----
+**Getting a Cesium Ion token:**
+1. Go to [ion.cesium.com](https://ion.cesium.com/) and create a free account.
+2. Navigate to **Access Tokens** in the sidebar.
+3. Click **Create Token**, then copy it into `NEXT_PUBLIC_CESIUM_ION_TOKEN`.
 
-# How the Real-Time Data Pipeline Works
+## API Routes
 
-Zenith’s observatory experience is built by combining **live data**, **derived calculations**, and **client-side propagation**.
+| Route | Description |
+|---|---|
+| `GET /api/telemetry` | Location-based observatory intelligence: cloud cover, visibility, moon phase, visible planets, sky quality, orbital observability metrics |
+| `GET /api/iss` | Live ISS position and orbital telemetry |
+| `GET /api/iss-pass` | ISS pass prediction for a selected location |
+| `GET /api/satellites/[category]` | Satellite category datasets — `stations`, `gps`, `weather`, `starlink`, `iridium` |
 
-## Step 1 — User selects a location
+## Real-Time Data Sources
 
-The user clicks a coordinate or searches for a place.
+| Source | Used For |
+|---|---|
+| **[CelesTrak](https://celestrak.org/)** | Satellite category feeds, TLE/orbital element sets, ISS orbital projection data — powers live propagation, the custom ISS prediction engine, and orbital visualization |
+| **[Open-Meteo](https://open-meteo.com/)** | Cloud cover, visibility, and timezone-related context — determines whether the sky is actually viewable from a location |
+| **[Nominatim](https://nominatim.openstreetmap.org/) / OpenStreetMap** | Reverse geocoding — converts coordinates into human-readable place, city, country, and region names |
+| **[Astronomy Engine](https://github.com/cosinekitty/astronomy)** | Moon phase, illumination, and visible-planet calculations based on observer coordinates |
+| **`react-globe.gl`** (Three.js) | The interactive 3D globe, geospatial rendering, and camera navigation |
+| **Custom ISS Pass Engine** (`satellite.js`) | Native 24-hour orbital projection engine built in-house — avoids rate-limited third-party APIs like Open Notify by computing overhead ISS passes server-side from CelesTrak TLE data |
 
-## Step 2 — Zenith resolves place + sky context
+> Additional services may be integrated as the project grows, but the above are the primary engines powering the current Zenith stack.
 
-The backend route handlers fetch:
+## Data Pipeline
 
-* location metadata from Nominatim
-* weather/visibility context from Open-Meteo
-* celestial context using Astronomy Engine
-* ISS or orbital context where relevant
+1. **User selects a location** — clicks a coordinate or searches for a place.
+2. **Zenith resolves place + sky context** — route handlers fetch location metadata from Nominatim, weather/visibility from Open-Meteo, celestial context from Astronomy Engine, and ISS/orbital context where relevant.
+3. **Zenith builds a telemetry payload** — a single object containing place info, coordinates, timezone/local time, cloud cover, visibility, moon phase, visible planets, sky quality signals, and orbital/ISS context.
+4. **Frontend renders the observatory UI** — the payload populates the Location Atlas, Sky Window, ISS/Satellite mode, or Orbital Lens overlays, depending on the active mode.
 
-## Step 3 — Zenith builds a telemetry payload
+## Responsive Design Strategy
 
-A location-specific telemetry object is assembled, containing:
+| Breakpoint | Behavior |
+|---|---|
+| **Desktop** | Full-screen 3D globe with rich, multi-zone side panels and overlays |
+| **Tablet** | Reduced spacing and rebalanced panels while preserving observatory hierarchy |
+| **Mobile** | Adaptive overlays/sheets, vertically stacked intelligence layouts, touch-friendly controls and search |
 
-* place information
-* coordinates
-* timezone / local time
-* cloud cover / visibility
-* moon phase
-* visible planets
-* sky quality / observability signals
-* orbital / ISS-related context
+**Layout techniques:** Flexbox, CSS Grid, responsive Tailwind breakpoints, and conditional rendering for stacked UI zones on smaller screens.
 
-## Step 4 — Frontend renders the observatory UI
+## Performance & Refresh Strategy
 
-The selected location is then displayed inside the relevant observatory mode:
+- Feature-based UI separation and selective satellite-layer rendering
+- Cached / revalidated orbital datasets
+- Client-side orbital propagation instead of constant full-server recomputation
+- Route-level fetching for observatory data
+- Refresh intervals tuned per data type:
 
-* location dossier / atlas
-* Sky Window
-* ISS / satellite mode
-* Orbital Lens overlays
+| Signal | Refresh Cadence |
+|---|---|
+| ISS position | Frequent |
+| Weather / cloud cover | Moderate |
+| Moon phase / visible planets | Slow |
+| TLE / satellite layer datasets | Cached, periodic |
 
----
+## Roadmap
 
-# Responsive Design Strategy
-
-Zenith is designed to be usable across all major screen sizes.
-
-## Desktop
-
-* full-screen 3D globe
-* observatory side panels / overlays
-* rich multi-zone layouts
-
-## Tablet
-
-* reduced spacing
-* rebalanced panels
-* preserved observatory hierarchy
-
-## Mobile
-
-* adaptive overlays / sheets
-* vertically stacked intelligence layouts
-* touch-friendly controls and search flow
-
-## Layout Techniques Used
-
-* **Flexbox**
-* **CSS Grid**
-* **responsive Tailwind breakpoints**
-* conditional rendering / stacked UI zones for smaller screens
-
----
-
-# Performance & Data Refresh Strategy
-
-Because Zenith combines live telemetry, a 3D globe, and orbital visualization, performance and freshness were important design considerations.
-
-## Key performance strategies
-
-* feature-based UI separation
-* selective satellite-layer rendering
-* cached / revalidated orbital datasets
-* client-side orbital propagation instead of constant full server recomputation
-* route-level fetching for observatory data
-* refresh intervals based on data type
-
-## Example refresh philosophy
-
-Different observatory signals refresh at different cadences:
-
-* **ISS position** → more frequent refresh
-* **weather / cloud cover** → moderate refresh interval
-* **moon / visible planets** → slower refresh cadence
-* **TLE / satellite layer datasets** → cached and refreshed periodically
-
-This keeps Zenith responsive while still feeling live.
-
-
----
-
-# Future Scope
-
-Potential future enhancements include:
-
-* constellation overlays
-* richer star-map rendering in Sky Window
-* side-by-side location sky comparison
-* orbital history playback
-* aurora / meteor shower awareness
-* saved observatory locations
-* public observatory event mode / educational mode
-
----
-
-
-## Suggested screenshots
-
-* Landing page
-* Launch Observatory globe
-* Location Atlas / Cosmic Book
-* Orbital Lens heatmap
-* Satellite / ISS mode
-* Sky Window
-* Cosmic Time Machine
-
-### Demo link
-
-[Add your demo link here]
+- [ ] Constellation overlays
+- [ ] Richer star-map rendering in Sky Window
+- [ ] Side-by-side location sky comparison
+- [ ] Orbital history playback
+- [ ] Aurora / meteor shower awareness
+- [ ] Saved observatory locations
+- [ ] Public observatory event / educational mode
 
 ## Screenshots
 
+> Add screenshots or a GIF walkthrough for each mode below.
+
+| Landing Page | Launch Observatory |
+|---|---|
+| _add screenshot_ | _add screenshot_ |
+
+| Location Atlas | Orbital Lens |
+|---|---|
+| _add screenshot_ | _add screenshot_ |
+
+| Satellite / ISS Mode | Sky Window |
+|---|---|
+| _add screenshot_ | _add screenshot_ |
+
+**Demo link:** _[Add your live demo URL here]_
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "Add your feature"`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+## License
+
+This project is intended for educational / hackathon purposes unless otherwise specified. If you plan to open-source it publicly, consider adding a standard license such as **MIT**.
 
 ---
 
-# License
-
-This project is intended for educational / hackathon purposes unless otherwise specified.
-
-If you plan to open-source it publicly, you can add a standard license such as **MIT**.
-
----
-
-
+<div align="center">
+Built with 🛰️ and ☕ for exploring what's above us.
+</div>
