@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { Satellite, Radio, Crosshair, Aperture } from "lucide-react";
+import { Satellite, Radio, Crosshair, Aperture, Sparkles, Cloud } from "lucide-react";
 import Link from "next/link";
 import LocationSearch from "./LocationSearch";
 import IntelligencePanel from "./IntelligencePanel";
@@ -13,6 +13,7 @@ import LayerManager from "./LayerManager";
 import { SatelliteCategory, TleData, LiveSatellite, LayerPayload } from "@/lib/satellites";
 import * as satellite from "satellite.js";
 import { CosmicBookOverlay } from "./CosmicBookOverlay";
+
 
 const GlobeViewer = dynamic(() => import("./GlobeViewer"), {
   ssr: false,
@@ -61,6 +62,7 @@ export default function ObservatoryClient() {
   const [isTrackingSatellite, setIsTrackingSatellite] = useState(false);
   const [trackingTrigger, setTrackingTrigger] = useState(0);
   const [orbitTrailsEnabled, setOrbitTrailsEnabled] = useState(true);
+
 
   // Orbital Lens State
   const [isLensActive, setIsLensActive] = useState(false);
@@ -496,6 +498,8 @@ export default function ObservatoryClient() {
               Orbital Lens
             </span>
           </button>
+          
+
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
         <div className="pointer-events-auto flex items-center gap-2">
@@ -532,6 +536,8 @@ export default function ObservatoryClient() {
           onAction={handlePanelAction}
         />
       </div>
+
+
     </div>
   );
 }

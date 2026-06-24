@@ -4,22 +4,24 @@ import { motion } from "framer-motion";
 
 interface Props {
   value: number; // 0-100
+  theme?: "light" | "dark";
 }
 
 const CATEGORIES = [
-  { max: 20,  label: "Pristine Sky",    color: "#00E5FF", bg: "from-[#00E5FF]/20" },
-  { max: 40,  label: "Minor Loss",      color: "#7FFF00", bg: "from-[#7FFF00]/20" },
-  { max: 60,  label: "Noticeable Loss", color: "#FFD700", bg: "from-[#FFD700]/20" },
-  { max: 80,  label: "Severe Loss",     color: "#FF8C00", bg: "from-[#FF8C00]/20" },
-  { max: 101, label: "Sky Crisis",      color: "#FF2D55", bg: "from-[#FF2D55]/20" },
+  { max: 20,  label: "Pristine Sky",    color: "#00E5FF", darkBg: "from-[#00E5FF]/20", lightBg: "from-[#00E5FF]/10", textColorDark: "#00E5FF", textColorLight: "#00b2c6" },
+  { max: 40,  label: "Minor Loss",      color: "#7FFF00", darkBg: "from-[#7FFF00]/20", lightBg: "from-[#7FFF00]/10", textColorDark: "#7FFF00", textColorLight: "#5da600" },
+  { max: 60,  label: "Noticeable Loss", color: "#FFD700", darkBg: "from-[#FFD700]/20", lightBg: "from-[#FFD700]/10", textColorDark: "#FFD700", textColorLight: "#b29600" },
+  { max: 80,  label: "Severe Loss",     color: "#FF8C00", darkBg: "from-[#FF8C00]/20", lightBg: "from-[#FF8C00]/10", textColorDark: "#FF8C00", textColorLight: "#cc7000" },
+  { max: 101, label: "Sky Crisis",      color: "#FF2D55", darkBg: "from-[#FF2D55]/20", lightBg: "from-[#FF2D55]/10", textColorDark: "#FF2D55", textColorLight: "#cc2444" },
 ];
 
 function getCategory(v: number) {
   return CATEGORIES.find(c => v < c.max) ?? CATEGORIES[CATEGORIES.length - 1];
 }
 
-export default function OrbitalGriefGauge({ value }: Props) {
+export default function OrbitalGriefGauge({ value, theme = "dark" }: Props) {
   const cat = getCategory(value);
+  const isLight = theme === "light";
 
   // SVG arc parameters
   const r  = 52;
@@ -40,7 +42,7 @@ export default function OrbitalGriefGauge({ value }: Props) {
 
   return (
     <div className="flex flex-col items-center">
-      <p className="text-[10px] font-mono text-slate-500 tracking-widest uppercase mb-3">
+      <p className={`text-[10px] font-mono tracking-widest uppercase mb-3 ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
         Orbital Grief Index
       </p>
 
@@ -50,7 +52,7 @@ export default function OrbitalGriefGauge({ value }: Props) {
           <path
             d={d}
             fill="none"
-            stroke="rgba(255,255,255,0.07)"
+            stroke={isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.07)"}
             strokeWidth="10"
             strokeLinecap="round"
           />
@@ -66,7 +68,7 @@ export default function OrbitalGriefGauge({ value }: Props) {
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference - ((value / 100) * circumference) }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            style={{ filter: `drop-shadow(0 0 6px ${cat.color})` }}
+            style={{ filter: isLight ? "none" : `drop-shadow(0 0 6px ${cat.color})` }}
           />
 
           {/* Centre value */}
@@ -74,7 +76,7 @@ export default function OrbitalGriefGauge({ value }: Props) {
             x={cx}
             y={cy + 4}
             textAnchor="middle"
-            fill="white"
+            fill={isLight ? "#1a2b3c" : "white"}
             fontSize="22"
             fontWeight="bold"
             fontFamily="monospace"
@@ -86,9 +88,9 @@ export default function OrbitalGriefGauge({ value }: Props) {
           </motion.text>
         </svg>
 
-        {/* Glow blob */}
+        {/* Glow blob - reduced opacity in light mode */}
         <div
-          className="absolute inset-0 rounded-full blur-2xl opacity-20 pointer-events-none"
+          className={`absolute inset-0 rounded-full blur-2xl pointer-events-none ${isLight ? 'opacity-5' : 'opacity-20'}`}
           style={{ background: cat.color }}
         />
       </div>
@@ -97,9 +99,9 @@ export default function OrbitalGriefGauge({ value }: Props) {
         key={cat.label}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`mt-1 px-4 py-1 rounded-full bg-gradient-to-r ${cat.bg} to-transparent border border-white/10`}
+        className={`mt-1 px-4 py-1 rounded-full bg-gradient-to-r ${isLight ? cat.lightBg : cat.darkBg} to-transparent border ${isLight ? 'border-black/5' : 'border-white/10'}`}
       >
-        <span className="text-xs font-semibold font-mono" style={{ color: cat.color }}>
+        <span className="text-xs font-semibold font-mono" style={{ color: isLight ? cat.textColorLight : cat.textColorDark }}>
           {cat.label}
         </span>
       </motion.div>

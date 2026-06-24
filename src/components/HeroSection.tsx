@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Play } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -28,15 +28,7 @@ export function HeroSection() {
 
       {/* Content */}
       <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center pt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-          className="mb-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-          <span className="text-xs font-medium text-[#00E5FF] tracking-wider uppercase">System Online</span>
-        </motion.div>
+        {/* System Online badge removed */}
 
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
@@ -64,7 +56,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.8 }}
-          className="flex flex-col sm:flex-row items-center gap-6"
+          className="flex flex-col items-center justify-center"
         >
           {/* Launch Observatory — navigates to full screen app */}
           <Link
@@ -83,15 +75,30 @@ export function HeroSection() {
             {/* Glow effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#7C3AED] opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500" />
           </Link>
-
-          <button className="group flex items-center gap-3 px-8 py-4 rounded-full text-white font-primary font-medium hover:bg-white/5 transition-colors duration-300">
-            <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 group-hover:bg-white/10 group-hover:border-white/40 transition-all">
-              <Play fill="currentColor" className="w-4 h-4 ml-0.5 text-slate-200 group-hover:text-white" />
-            </div>
-            Watch Demo
-          </button>
         </motion.div>
       </div>
+
+      {/* Scroll Down Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20 cursor-pointer group"
+        onClick={() => {
+          window.scrollTo({
+            top: window.innerHeight,
+            behavior: 'smooth'
+          });
+        }}
+      >
+        <span className="text-xs font-mono text-slate-400 tracking-widest uppercase group-hover:text-white transition-colors">Scroll to Explore</span>
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <ChevronDown className="w-5 h-5 text-slate-400 group-hover:text-[#00E5FF] transition-colors" />
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
