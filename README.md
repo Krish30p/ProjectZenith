@@ -431,46 +431,6 @@ The user enters a full-screen observatory mode with:
 
 ---
 
-# Project Structure
-
-> The exact file names may evolve during UI refactors, but the structure is organized around observatory features and route-level data fetching.
-
-
-ProjectZenith/
-├── public/                     # Static assets (textures, images)
-├── src/
-│   ├── app/                    # Next.js 14 App Router
-│   │   ├── api/                # Backend API Routes
-│   │   │   ├── iss-pass/       # Custom ISS prediction engine
-│   │   │   ├── satellites/     # CelesTrak TLE fetching & parsing
-│   │   │   └── telemetry/      # Open-Meteo & Astronomy Engine aggregator
-│   │   ├── observatory/        # Main Observatory route
-│   │   │   └── page.tsx
-│   │   ├── sky-window/         # Standalone Sky Window route
-│   │   │   └── page.tsx
-│   │   ├── layout.tsx          # Root layout & global providers
-│   │   └── page.tsx            # Landing page
-│   ├── components/             # React Components
-│   │   ├── observatory/        # Core Observatory Features
-│   │   │   ├── CosmicBookOverlay.tsx  # Location Atlas (Physical Book UI)
-│   │   │   ├── GlobeViewer.tsx        # 3D react-globe.gl component
-│   │   │   ├── IntelligencePanel.tsx  # Telemetry data & insights panel
-│   │   │   ├── LocationSearch.tsx     # Nominatim search component
-│   │   │   ├── ObservatoryClient.tsx  # Main Observatory hub & Orbital Lens
-│   │   │   └── SkyWindowClient.tsx    # Sky Window Rooftop Observatory UI
-│   │   ├── TheSkyWeLost.tsx    # Landing page storytelling section
-│   │   ├── HeroSection.tsx     # Landing page hero
-│   │   └── Navbar.tsx          # Global navigation
-│   └── lib/                    # Core Utilities
-│       └── satellites.ts       # Satellite math, categorization & TLE logic
-├── .env.local                  # Environment variables
-├── next.config.mjs             # Next.js configuration
-├── package.json                # Dependencies & scripts
-└── tailwind.config.ts          # Styling design system
-
-
----
-
 # API Routes
 
 ## `/api/telemetry`
