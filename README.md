@@ -511,16 +511,14 @@ Returns satellite category datasets for layers such as:
 
 Create a `.env.local` file in the project root and add the following configuration:
 
+## Environment Variables
+
+> **Important:** This project does not expose API keys in the repository. Create a `.env.local` file in the project root to configure your environment.
+
+**Required Keys:**
 ```env
-# Required: Cesium Ion Token for 3D Globe Visualization
-NEXT_PUBLIC_CESIUM_ION_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNThkNWI0Yi0xODcwLTQzNzktYTA4Zi1hNjQyNjM2NTc1NWQiLCJpZCI6NDQ2NTk5LCJzdWIiOiJraHJpc2hhMjkiLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoiUHJvamVjdFplbml0aCIsImlhdCI6MTc4MTg3MjcyMn0._eMLRlqEcEIof-eqXFahdFixtLVxeFfIlZhaXffFfkE
-
-# Core API Base URLs (Already configured, do not change unless necessary)
-OPEN_METEO_BASE_URL=https://api.open-meteo.com
-NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
-CELESTRAK_BASE_URL=https://celestrak.org
-
-
+# Get your token at: https://ion.cesium.com/
+NEXT_PUBLIC_CESIUM_ION_TOKEN=your_cesium_ion_token
 
 ## External APIs / Services Used
 
