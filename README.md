@@ -147,23 +147,10 @@ This helps users understand:
 * regions with high satellite overhead activity
 * how orbital congestion changes visually at a planetary scale
 
----
-
-## 6) Sky Window
-
-Sky Window is a dedicated observatory experience focused on the **human-facing sky above a chosen location**.
-
-It is designed to answer:
-
-* What does the sky above this place look like right now?
-* What planets may be visible?
-* What is the moon phase here?
-* Are the conditions good for observation?
-* Is an ISS pass expected?
 
 ---
 
-## 7) Cosmic Time Machine
+## 6) Cosmic Time Machine
 
 Cosmic Time Machine is Zenith’s narrative visualization module that explores how orbital traffic has evolved across time.
 
@@ -177,9 +164,7 @@ This gives Zenith both **live operational value** and **educational / awareness 
 
 ---
 
-# How It Meets the Hackathon Requirements
-
-## 1) Interactivity — Functional Interactive Map / 3D Globe
+## Interactivity — Functional Interactive Map / 3D Globe
 
 Zenith includes a **fully interactive 3D globe** that:
 
