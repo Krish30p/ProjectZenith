@@ -318,8 +318,7 @@ CELESTRAK_BASE_URL=https://celestrak.org
 
 | Landing Page | Launch Observatory |
 |---|---|
-| <img width="947" height="437" alt="image" src="https://github.com/user-attachments/assets/039e5d47-2e1b-4c0f-8f24-99cd819c66be" /> |
- | <img width="959" height="436" alt="image" src="https://github.com/user-attachments/assets/bb3e75e4-c1d3-4360-9a86-57569b4e8212" /> |
+| <img width="947" height="437" alt="image" src="https://github.com/user-attachments/assets/039e5d47-2e1b-4c0f-8f24-99cd819c66be" /> | <img width="959" height="436" alt="image" src="https://github.com/user-attachments/assets/bb3e75e4-c1d3-4360-9a86-57569b4e8212" /> |
  
 | Location Atlas | Orbital Lens |
 |---|---|
