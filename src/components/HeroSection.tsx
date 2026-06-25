@@ -1,24 +1,32 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#020617] flex items-center justify-center">
-      {/* Video Background */}
+      {/* Video Background — rendered client-only to prevent hydration mismatch from browser extensions */}
       <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="object-cover w-full h-full scale-105" // scale slightly to allow for parallax if needed
-        >
-          <source src="/video.mp4" type="video/mp4" />
-          {/* Fallback gradient if video fails or is loading */}
-        </video>
+        {isMounted && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="object-cover w-full h-full scale-105"
+          >
+            <source src="/video.mp4" type="video/mp4" />
+          </video>
+        )}
         {/* Dark overlay for text readability - rgba(0,0,0,0.55) */}
         <div className="absolute inset-0 bg-black/55 z-10" />
         

@@ -103,6 +103,7 @@ export function TheSkyWeLost({ onEnterTimeMachine }: TheSkyWeLostProps) {
                 src="/city-light.png" 
                 alt="City Light Pollution" 
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-center"
                 priority
               />
@@ -127,6 +128,7 @@ export function TheSkyWeLost({ onEnterTimeMachine }: TheSkyWeLostProps) {
                 src="/dark-sky.png" 
                 alt="Pristine Dark Sky" 
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-center"
                 priority
               />
