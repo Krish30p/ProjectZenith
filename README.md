@@ -315,7 +315,6 @@ CELESTRAK_BASE_URL=https://celestrak.org
 
 ## Screenshots
 
-> Add screenshots or a GIF walkthrough for each mode below.
 
 | Landing Page | Launch Observatory |
 |---|---|
