@@ -44,17 +44,14 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="#about" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
-              About
-            </Link>
-            <Link href="#features" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
+            <Link href="/features" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
               Features
             </Link>
             <Link href="/observatory" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
               Observatory
             </Link>
-            <Link href="#documentation" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
-              Documentation
+            <Link href="/time-machine" className="text-lg font-primary text-slate-300 hover:text-white transition-colors">
+              Cosmic Time Machine
             </Link>
           </div>
 
@@ -78,17 +75,14 @@ export function Navbar() {
           className="md:hidden bg-[#020617]/95 backdrop-blur-xl border-b border-white/10"
         >
           <div className="px-4 pt-2 pb-6 space-y-4 shadow-xl">
-            <Link href="#about" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
-              About
-            </Link>
-            <Link href="#features" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
+            <Link href="/features" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
               Features
             </Link>
             <Link href="/observatory" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
               Observatory
             </Link>
-            <Link href="#documentation" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
-              Documentation
+            <Link href="/time-machine" className="block text-xl font-primary font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-md">
+              Cosmic Time Machine
             </Link>
 
           </div>
