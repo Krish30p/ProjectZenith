@@ -322,7 +322,8 @@ CELESTRAK_BASE_URL=https://celestrak.org
  
 | Location Atlas | Orbital Lens |
 |---|---|
-| _add screenshot_ | _add screenshot_ |
+| <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/9aab7103-b969-4c68-91a9-3f483bbbfe47" /> | <img width="959" height="437" alt="image" src="https://github.com/user-attachments/assets/914e062e-de35-4391-adea-d61481f087b9" /> |
+
 
 | Satellite / ISS Mode | Feature section |
 |---|---|
