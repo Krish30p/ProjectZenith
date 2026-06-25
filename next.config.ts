@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Suppress the "cannot use import statement" error from satellite.js wasm workers
   },
+  // Silence Turbopack error (we use a custom webpack config)
+  turbopack: {},
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
       config.plugins.push(
