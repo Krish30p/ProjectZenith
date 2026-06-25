@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
       worker_threads: false,
     };
 
+    // Exclude @spz-loader/core from bundling since SPZ models are not used
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@spz-loader/core': false,
+    };
+
     // Strip "node:" scheme so webpack treats them as standard modules (which are then false in fallback)
     config.plugins.push(
       new webpack.NormalModuleReplacementPlugin(
