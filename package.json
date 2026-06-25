@@ -6,13 +6,15 @@
     "dev": "next dev --webpack",
     "build": "node copy-cesium.js && node --max-old-space-size=6144 node_modules/next/dist/bin/next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node patch-wasm-escapes.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@google/genai": "^2.10.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@spz-loader/core": "^0.3.1",
     "@types/three": "^0.184.1",
     "astronomy-engine": "^2.1.19",
     "cesium": "^1.142.0",
