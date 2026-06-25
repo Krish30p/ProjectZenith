@@ -96,10 +96,7 @@ A dedicated tracking experience showing live ISS position, orbital state, altitu
 ### 5. Orbital Lens — Space Congestion Heatmap
 Visualizes orbital traffic *density* across Earth (rather than isolated satellite markers) to help answer: **where is orbital space currently most crowded?** Highlights dense orbital corridors and how congestion shifts at a planetary scale.
 
-### 6. Sky Window
-A human-facing view of the sky above a chosen location — what's visible right now, which planets may be observable, current moon phase, whether conditions are good for observation, and whether an ISS pass is coming up.
-
-### 7. Cosmic Time Machine
+### 6. Cosmic Time Machine
 A narrative visualization module contrasting quieter historical orbital eras with the modern orbital boom and projected future congestion — giving Zenith both operational and educational value.
 
 ## Capabilities at a Glance
@@ -147,7 +144,6 @@ Zenith renders feature-specific UI:
    - Satellite Mode
    - ISS Mode
    - Orbital Lens
-   - Sky Window
    - Time Machine
 ```
 
@@ -281,7 +277,7 @@ CELESTRAK_BASE_URL=https://celestrak.org
 1. **User selects a location** — clicks a coordinate or searches for a place.
 2. **Zenith resolves place + sky context** — route handlers fetch location metadata from Nominatim, weather/visibility from Open-Meteo, celestial context from Astronomy Engine, and ISS/orbital context where relevant.
 3. **Zenith builds a telemetry payload** — a single object containing place info, coordinates, timezone/local time, cloud cover, visibility, moon phase, visible planets, sky quality signals, and orbital/ISS context.
-4. **Frontend renders the observatory UI** — the payload populates the Location Atlas, Sky Window, ISS/Satellite mode, or Orbital Lens overlays, depending on the active mode.
+4. **Frontend renders the observatory UI** — the payload populates the Location Atlas, ISS/Satellite mode, or Orbital Lens overlays, depending on the active mode.
 
 ## Responsive Design Strategy
 
@@ -311,7 +307,6 @@ CELESTRAK_BASE_URL=https://celestrak.org
 ## Roadmap
 
 - [ ] Constellation overlays
-- [ ] Richer star-map rendering in Sky Window
 - [ ] Side-by-side location sky comparison
 - [ ] Orbital history playback
 - [ ] Aurora / meteor shower awareness
@@ -324,13 +319,15 @@ CELESTRAK_BASE_URL=https://celestrak.org
 
 | Landing Page | Launch Observatory |
 |---|---|
-| _add screenshot_ | _add screenshot_ |
+| <img width="947" height="437" alt="image" src="https://github.com/user-attachments/assets/20855972-4dc4-47dd-97b7-3a79abf874c6" />
+ | <img width="958" height="435" alt="image" src="https://github.com/user-attachments/assets/5306e242-8170-4b79-bdaf-fa4274aaf25e" />
+ |
 
 | Location Atlas | Orbital Lens |
 |---|---|
 | _add screenshot_ | _add screenshot_ |
 
-| Satellite / ISS Mode | Sky Window |
+| Satellite / ISS Mode | Feature section |
 |---|---|
 | _add screenshot_ | _add screenshot_ |
 
