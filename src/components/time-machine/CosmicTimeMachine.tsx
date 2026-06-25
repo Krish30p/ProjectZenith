@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useMotionValueEvent, MotionValue } from 'framer-motion';
 import { COSMIC_TIME_MACHINE_YEARS, CosmicTimeMachineYear } from '@/lib/timeMachineData';
-import { AlertTriangle, Activity, Aperture, ChevronDown } from 'lucide-react';
+import { AlertTriangle, Activity, Aperture, ChevronDown, ArrowLeft } from 'lucide-react';
 
 function CheckpointView({ 
   data, 
@@ -191,6 +191,14 @@ export function CosmicTimeMachine() {
       ref={containerRef}
       className="fixed inset-0 z-50 w-full h-screen bg-[#01030A] overflow-y-auto scroll-smooth"
     >
+      <a 
+        href="/"
+        className="fixed top-6 left-6 md:top-10 md:left-10 z-[100] flex items-center gap-2 px-5 py-2.5 bg-[#020617]/60 backdrop-blur-md border border-white/20 rounded-full text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/40 transition-all shadow-lg group"
+      >
+        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-sm font-medium tracking-widest uppercase">Home</span>
+      </a>
+
       <div className="w-full h-[2400vh] relative">
         <div className="sticky top-0 w-full h-screen overflow-hidden bg-black">
           
