@@ -127,6 +127,8 @@ async function refreshLayer(category: string) {
         });
 
         console.log(`[Satellite API] Parsed local-fallback active.txt for ${category}.`);
+      } else {
+        console.error(`[Satellite API] active.txt fallback file is missing at path: ${activePath}`);
       }
     } catch (fsErr) {
       console.error('[Satellite API] active.txt fallback failed:', fsErr);
@@ -174,6 +176,7 @@ export async function GET(
 
   const finalPayload = memoryCache.get(category);
   if (!finalPayload) {
+    console.error(`[Satellite API] GET /api/satellites/${category} failed: no payload found in cache or fallback.`);
     return NextResponse.json({ error: 'Failed to fetch satellite layer' }, { status: 500 });
   }
 
