@@ -520,7 +520,7 @@ export default function ObservatoryClient() {
 
       {/* Intelligence Panel */}
       <div
-        className={`absolute bottom-0 md:top-0 md:bottom-auto right-0 w-full md:max-w-[500px] h-[70vh] md:h-full z-40 rounded-t-3xl md:rounded-none overflow-hidden transition-all duration-500 ease-in-out ${showIntelligencePanel ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}
+        className={`absolute bottom-0 md:top-4 md:bottom-4 right-0 md:right-4 w-full md:max-w-[420px] h-[70vh] md:h-[calc(100vh-32px)] z-40 rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 ease-in-out ${showIntelligencePanel ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}
       >
         <IntelligencePanel
           consoleMode={consoleMode}
