@@ -169,22 +169,22 @@ export function FeaturesArchive() {
         </header>
 
         {/* Feature Index Strip */}
-        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-16 max-w-5xl mx-auto">
+        <div className="flex flex-nowrap items-center justify-between w-full gap-2 mb-16 overflow-x-auto custom-scrollbar pb-2">
           {features.map((feature, idx) => {
             const isActive = idx === activeIndex;
             return (
               <button
                 key={feature.id}
                 onClick={() => setActiveIndex(idx)}
-                className={`px-4 py-2 rounded-full border transition-all duration-300 text-[10px] uppercase font-mono tracking-widest flex items-center gap-2
+                className={`flex-1 whitespace-nowrap px-3 md:px-4 py-2 rounded-full border transition-all duration-300 text-[9px] md:text-[10px] uppercase font-mono tracking-widest flex items-center justify-center gap-2
                   ${isActive 
                     ? 'border-[#d4af37]/50 bg-[#d4af37]/10 text-[#d4af37]' 
                     : 'border-white/10 bg-black/20 text-slate-400 hover:border-white/30 hover:text-slate-200'
                   }`}
               >
-                <feature.icon className="w-3 h-3" />
-                <span className="hidden md:inline">{feature.title}</span>
-                <span className="md:hidden">{idx + 1}</span>
+                <feature.icon className="w-3 h-3 shrink-0" />
+                <span className="hidden lg:inline">{feature.title}</span>
+                <span className="lg:hidden">{idx + 1}</span>
               </button>
             );
           })}
