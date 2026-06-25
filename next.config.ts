@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
   },
   // Silence Turbopack error (we use a custom webpack config)
   turbopack: {},
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   webpack: (config, { isServer, webpack }) => {
     // Copying Cesium assets is now handled by the pre-build script (copy-cesium.js)
